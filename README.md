@@ -1,1 +1,0 @@
-# mcp-code-guidelines
