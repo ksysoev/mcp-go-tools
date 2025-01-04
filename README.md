@@ -195,6 +195,40 @@ go test ./...
 
 The application includes version and build information that can be set at build time. This information is displayed in logs and can be useful for debugging.
 
+## Using with Cline
+
+To use this MCP server with Cline, add it to Cline's MCP settings file located at:
+- VSCode: `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
+- Claude Desktop App: `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+Add the following configuration to the `mcpServers` object in the settings file:
+
+```json
+{
+  "mcpServers": {
+    "code-tools": {
+      "command": "mcp",
+      "args": ["start"],
+      "env": {}
+    }
+  }
+}
+```
+
+After adding the configuration, Cline will have access to the following tools:
+- `get_rules_by_category` - Get all rules for a given category
+- `get_rules_by_type` - Get all rules of a given type
+- `get_applicable_rules` - Get rules that apply to a given context
+- `get_template` - Get template for a given rule
+- `get_examples` - Get examples for a given rule
+
+Example usage in Cline:
+```
+You: Show me Go interface naming rules
+Cline: Let me get those rules for you...
+[Uses get_rules_by_category with "golang" and "interface_naming"]
+```
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
