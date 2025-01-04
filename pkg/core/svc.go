@@ -7,6 +7,8 @@ package core
 
 import (
 	"context"
+	"fmt"
+	"strings"
 )
 
 // ResourceRepo defines the interface for managing code generation rules and resources.
@@ -29,6 +31,65 @@ type Rule struct {
 	AppliesTo   []string    `json:"applies_to"`
 	Priority    int         `json:"priority"`
 	IsRequired  bool        `json:"required"`
+}
+
+// FormatForLLM returns a concise, token-optimized string representation of the rule
+// that is easy for Language Models to parse and understand. It omits empty fields
+// and unnecessary metadata to reduce token usage while preserving essential information.
+func (r *Rule) FormatForLLM() string {
+	var parts []string
+
+	// Always include name and description as they're essential
+	parts = append(parts, fmt.Sprintf("Rule: %s", r.Name))
+	if r.Description != "" {
+		parts = append(parts, fmt.Sprintf("Description: %s", r.Description))
+	}
+
+	// Include category and type if present
+	if r.Category != "" {
+		parts = append(parts, fmt.Sprintf("Category: %s", r.Category))
+	}
+	if r.Type != "" {
+		parts = append(parts, fmt.Sprintf("Type: %s", r.Type))
+	}
+
+	// Add pattern information if present
+	if r.Pattern.Template != "" {
+		parts = append(parts, fmt.Sprintf("Template:\n%s", r.Pattern.Template))
+	}
+	if len(r.Pattern.Replacements) > 0 {
+		replacements := make([]string, 0, len(r.Pattern.Replacements))
+		for k, v := range r.Pattern.Replacements {
+			replacements = append(replacements, fmt.Sprintf("%s -> %s", k, v))
+		}
+		parts = append(parts, fmt.Sprintf("Replacements: %s", strings.Join(replacements, ", ")))
+	}
+
+	// Include examples if present
+	if len(r.Examples) > 0 {
+		examples := make([]string, 0, len(r.Examples))
+		for _, ex := range r.Examples {
+			if ex.Description != "" && ex.Code != "" {
+				examples = append(examples, fmt.Sprintf("Example (%s):\n%s", ex.Description, ex.Code))
+			}
+		}
+		if len(examples) > 0 {
+			parts = append(parts, strings.Join(examples, "\n"))
+		}
+	}
+
+	// Add applicability and priority information
+	if len(r.AppliesTo) > 0 {
+		parts = append(parts, fmt.Sprintf("Applies to: %s", strings.Join(r.AppliesTo, ", ")))
+	}
+	if r.Priority > 0 {
+		parts = append(parts, fmt.Sprintf("Priority: %d", r.Priority))
+	}
+	if r.IsRequired {
+		parts = append(parts, "Required: yes")
+	}
+
+	return strings.Join(parts, "\n")
 }
 
 // RulePattern defines how the rule should be implemented.
@@ -68,4 +129,10 @@ func New(resource ResourceRepo) *Service {
 // Returns error if the repository access fails.
 func (s *Service) GetCodeStyle(ctx context.Context, categories []string, language string) ([]Rule, error) {
 	return s.resource.GetCodeStyle(ctx, categories, language)
+}
+
+// String implements the Stringer interface for Rule.
+// It uses FormatForLLM to provide a string representation optimized for LLMs.
+func (r *Rule) String() string {
+	return r.FormatForLLM()
 }

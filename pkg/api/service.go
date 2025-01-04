@@ -11,12 +11,60 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/ksysoev/mcp-code-tools/pkg/core"
 	mcp "github.com/metoro-io/mcp-golang"
 	"github.com/metoro-io/mcp-golang/transport/stdio"
 	"golang.org/x/sync/errgroup"
 )
+
+const codeStyleDescription = `Retrieve coding style guidelines and best practices for generating idiomatic code.
+
+This tool helps Language Models understand and apply consistent coding standards when generating or modifying code. It provides language-specific rules, patterns, and examples for writing high-quality, maintainable code.
+
+Use this tool when you need to:
+1. Generate new code that follows language idioms
+2. Understand naming conventions (e.g., how to name interfaces, variables)
+3. Apply proper code organization (e.g., file structure, package layout)
+4. Implement language-specific patterns and practices
+5. Format code according to language standards
+
+Input Parameters:
+- categories: Comma separated list of rule categories to filter by
+  * "naming" - conventions for naming variables, functions, types
+  * "formatting" - code formatting and style rules
+  * "organization" - code structure and layout guidelines
+  * "patterns" - common design patterns and implementations
+  * "documentation" - rules for comments and documentation
+  * "interfaces" - interface design principles (Go-specific)
+  * "packages" - package organization rules (Go-specific)
+  * "errors" - error handling conventions (Go-specific)
+  * "concurrency" - concurrent programming patterns (Go-specific)
+
+- language: Target programming language (lowercase)
+  Examples: "go", "typescript"
+
+Returns:
+- Array of matching style rules, each containing:
+  * Name and description
+  * Code templates and examples
+  * Priority level
+  * Whether the rule is required
+
+Example Usage:
+1. Get Go interface naming rules:
+   {
+     "categories": ["naming", "interfaces"],
+     "language": "go"
+   }
+
+2. Get Python documentation standards:
+   {
+     "categories": ["documentation"],
+     "language": "python"
+   }
+`
 
 // ToolHandler defines the interface for handling code generation rule operations.
 // Implementations must be safe for concurrent use as methods may be called
@@ -88,8 +136,8 @@ func (s *Service) Run(ctx context.Context) error {
 type CodeStyleArgs struct {
 	// Category name for filtering rules
 	// Example: "controller", "repository", "service"
-	Categories []string `json:"category" jsonschema:"required,description=The category name for filtering code generation rules. Should be lowercase and consistent. Examples: 'testing', 'documentation', 'code', 'project'"`
-	Language   string   `json:"language" jsonschema:"required,description=The language name for filtering code generation rules. Should be lowercase and consistent. Examples: 'go', 'typescript', 'python', 'java', 'csharp', 'rust'"`
+	Categories string `json:"category" jsonschema:"required,description=The category name for filtering code generation rules, it can contation comma separate list. Examples: 'testing', 'documentation', 'code', 'project'"`
+	Language   string `json:"language" jsonschema:"required,description=The language name for filtering code generation rules. Should be lowercase and consistent. Examples: 'go', 'typescript', 'python', 'java', 'csharp', 'rust'"`
 }
 
 // mustMarshal marshals the value to JSON and panics on error.
@@ -108,17 +156,33 @@ func mustMarshal(v interface{}) []byte {
 // Returns error if any tool registration fails.
 func (s *Service) setupTools(server *mcp.Server) error {
 	// Register get rules by category tool
-	err := server.RegisterTool("get_codestyle", "", func(args CodeStyleArgs) (*mcp.ToolResponse, error) {
+	err := server.RegisterTool("codestyle", codeStyleDescription, func(args CodeStyleArgs) (*mcp.ToolResponse, error) {
 		slog.Debug("handling get_code_guidelines request", "category", args.Categories, "language", args.Language)
 
-		rules, err := s.handler.GetCodeStyle(context.Background(), args.Categories, args.Language)
+		// Split categories by comma
+		categories := strings.Split(args.Categories, ",")
+		for i, cat := range categories {
+			categories[i] = strings.TrimSpace(cat)
+		}
+
+		rules, err := s.handler.GetCodeStyle(context.Background(), categories, args.Language)
 		if err != nil {
 			slog.Debug("get_rules_by_category failed", "error", err)
 			return nil, fmt.Errorf("get rules by category: %w", err)
 		}
 
 		slog.Debug("get_rules_by_category completed", "rules_count", len(rules))
-		return mcp.NewToolResponse(mcp.NewTextContent(string(mustMarshal(rules)))), nil
+
+		// Format rules in an LLM-friendly way
+		var formattedRules []string
+		for _, rule := range rules {
+			// Include both the rule format and its LLM-friendly representation
+			formattedRules = append(formattedRules,
+				rule.FormatForLLM(),
+				"---") // Separator between rules
+		}
+
+		return mcp.NewToolResponse(mcp.NewTextContent(strings.Join(formattedRules, "\n"))), nil
 	})
 	if err != nil {
 		return fmt.Errorf("register get rules by category tool: %w", err)
