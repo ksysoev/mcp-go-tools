@@ -2,15 +2,24 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
+	"github.com/ksysoev/mcp-code-tools/pkg/core"
 	mcp "github.com/metoro-io/mcp-golang"
 	"github.com/metoro-io/mcp-golang/transport/stdio"
 	"golang.org/x/sync/errgroup"
 )
 
-type ToolHandler interface{}
+type ToolHandler interface {
+	ValidateCode(ctx context.Context, code, context string) (*core.ValidationResult, error)
+	GetRulesByCategory(ctx context.Context, category string) ([]core.Rule, error)
+	GetRulesByType(ctx context.Context, ruleType string) ([]core.Rule, error)
+	GetApplicableRules(ctx context.Context, context string) ([]core.Rule, error)
+	GetTemplate(ctx context.Context, ruleName string) (string, error)
+	GetExamples(ctx context.Context, ruleName string) ([]core.Example, error)
+}
 
 type Config struct {
 }
@@ -56,8 +65,103 @@ func (s *Service) Run(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) setupTools(*mcp.Server) error {
-	//TODO: Implement setup tools for mcp server
+// Tool argument types
+type ValidateCodeArgs struct {
+	Code    string `json:"code"`
+	Context string `json:"context"`
+}
+
+type CategoryArgs struct {
+	Category string `json:"category"`
+}
+
+type TypeArgs struct {
+	Type string `json:"type"`
+}
+
+type ContextArgs struct {
+	Context string `json:"context"`
+}
+
+type RuleNameArgs struct {
+	RuleName string `json:"rule_name"`
+}
+
+// mustMarshal marshals the value to JSON and panics on error
+func mustMarshal(v interface{}) []byte {
+	data, err := json.Marshal(v)
+	if err != nil {
+		panic(fmt.Sprintf("failed to marshal JSON: %v", err))
+	}
+	return data
+}
+
+func (s *Service) setupTools(server *mcp.Server) error {
+	// Register validate code tool
+	if err := server.RegisterTool("validate_code", "Validate code against applicable rules", func(args ValidateCodeArgs) (*mcp.ToolResponse, error) {
+		result, err := s.handler.ValidateCode(context.Background(), args.Code, args.Context)
+		if err != nil {
+			return nil, fmt.Errorf("validate code: %w", err)
+		}
+		return mcp.NewToolResponse(mcp.NewTextContent(string(mustMarshal(result)))), nil
+	}); err != nil {
+		return fmt.Errorf("register validate code tool: %w", err)
+	}
+
+	// Register get rules by category tool
+	if err := server.RegisterTool("get_rules_by_category", "Get all rules for a given category", func(args CategoryArgs) (*mcp.ToolResponse, error) {
+		rules, err := s.handler.GetRulesByCategory(context.Background(), args.Category)
+		if err != nil {
+			return nil, fmt.Errorf("get rules by category: %w", err)
+		}
+		return mcp.NewToolResponse(mcp.NewTextContent(string(mustMarshal(rules)))), nil
+	}); err != nil {
+		return fmt.Errorf("register get rules by category tool: %w", err)
+	}
+
+	// Register get rules by type tool
+	if err := server.RegisterTool("get_rules_by_type", "Get all rules of a given type", func(args TypeArgs) (*mcp.ToolResponse, error) {
+		rules, err := s.handler.GetRulesByType(context.Background(), args.Type)
+		if err != nil {
+			return nil, fmt.Errorf("get rules by type: %w", err)
+		}
+		return mcp.NewToolResponse(mcp.NewTextContent(string(mustMarshal(rules)))), nil
+	}); err != nil {
+		return fmt.Errorf("register get rules by type tool: %w", err)
+	}
+
+	// Register get applicable rules tool
+	if err := server.RegisterTool("get_applicable_rules", "Get all rules that apply to a given context", func(args ContextArgs) (*mcp.ToolResponse, error) {
+		rules, err := s.handler.GetApplicableRules(context.Background(), args.Context)
+		if err != nil {
+			return nil, fmt.Errorf("get applicable rules: %w", err)
+		}
+		return mcp.NewToolResponse(mcp.NewTextContent(string(mustMarshal(rules)))), nil
+	}); err != nil {
+		return fmt.Errorf("register get applicable rules tool: %w", err)
+	}
+
+	// Register get template tool
+	if err := server.RegisterTool("get_template", "Get template for a given rule", func(args RuleNameArgs) (*mcp.ToolResponse, error) {
+		template, err := s.handler.GetTemplate(context.Background(), args.RuleName)
+		if err != nil {
+			return nil, fmt.Errorf("get template: %w", err)
+		}
+		return mcp.NewToolResponse(mcp.NewTextContent(template)), nil
+	}); err != nil {
+		return fmt.Errorf("register get template tool: %w", err)
+	}
+
+	// Register get examples tool
+	if err := server.RegisterTool("get_examples", "Get examples for a given rule", func(args RuleNameArgs) (*mcp.ToolResponse, error) {
+		examples, err := s.handler.GetExamples(context.Background(), args.RuleName)
+		if err != nil {
+			return nil, fmt.Errorf("get examples: %w", err)
+		}
+		return mcp.NewToolResponse(mcp.NewTextContent(string(mustMarshal(examples)))), nil
+	}); err != nil {
+		return fmt.Errorf("register get examples tool: %w", err)
+	}
 
 	return nil
 }
