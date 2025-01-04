@@ -11,7 +11,6 @@
           }
       }
     format: "go"
-    validation: "^func New[A-Z][a-zA-Z0-9]*\\("
   applies_to: ["struct"]
   priority: 1
   required: true
@@ -53,17 +52,11 @@
 # Example of a naming rule
 - name: "naming_convention"
   category: "style"
-  type: "constraint"
+  type: "template"
   description: "Naming conventions for Go code"
   pattern:
-    validation: "^[a-z][a-zA-Z0-9]*$|^[A-Z][a-zA-Z0-9]*$"
-  constraints:
-    - type: "interface_suffix"
-      value: "er"
-      message: "Interface names should end with 'er' for single-method interfaces"
-    - type: "var_length"
-      value: 30
-      message: "Variable names should not exceed 30 characters"
+    template: "{{.Name}}"
+    format: "go"
   applies_to: ["interface", "variable", "function", "type"]
   priority: 2
   required: true
@@ -75,11 +68,7 @@
   description: "Standard error handling patterns"
   pattern:
     template: "return fmt.Errorf(\"{{.Operation}}: %w\", err)"
-    validation: "return (fmt\\.Errorf|errors\\.Wrap)\\("
-  constraints:
-    - type: "required_check"
-      value: "if err != nil"
-      message: "Must check errors"
+    format: "go"
   applies_to: ["function", "method"]
   priority: 1
   required: true
@@ -93,11 +82,7 @@
     template: |
       // {{.Name}} {{.Action}}
       // {{.Description}}
-    validation: "^// [A-Z].*\\.$"
-  constraints:
-    - type: "required_sections"
-      value: ["Parameters", "Returns"]
-      message: "Documentation must include parameters and returns sections"
+    format: "go"
   applies_to: ["function", "type", "package"]
   priority: 1
   required: true

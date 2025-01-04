@@ -13,7 +13,6 @@ import (
 )
 
 type ToolHandler interface {
-	ValidateCode(ctx context.Context, code, context string) (*core.ValidationResult, error)
 	GetRulesByCategory(ctx context.Context, category string) ([]core.Rule, error)
 	GetRulesByType(ctx context.Context, ruleType string) ([]core.Rule, error)
 	GetApplicableRules(ctx context.Context, context string) ([]core.Rule, error)
@@ -66,11 +65,6 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 // Tool argument types
-type ValidateCodeArgs struct {
-	Code    string `json:"code"`
-	Context string `json:"context"`
-}
-
 type CategoryArgs struct {
 	Category string `json:"category"`
 }
@@ -97,17 +91,6 @@ func mustMarshal(v interface{}) []byte {
 }
 
 func (s *Service) setupTools(server *mcp.Server) error {
-	// Register validate code tool
-	if err := server.RegisterTool("validate_code", "Validate code against applicable rules", func(args ValidateCodeArgs) (*mcp.ToolResponse, error) {
-		result, err := s.handler.ValidateCode(context.Background(), args.Code, args.Context)
-		if err != nil {
-			return nil, fmt.Errorf("validate code: %w", err)
-		}
-		return mcp.NewToolResponse(mcp.NewTextContent(string(mustMarshal(result)))), nil
-	}); err != nil {
-		return fmt.Errorf("register validate code tool: %w", err)
-	}
-
 	// Register get rules by category tool
 	if err := server.RegisterTool("get_rules_by_category", "Get all rules for a given category", func(args CategoryArgs) (*mcp.ToolResponse, error) {
 		rules, err := s.handler.GetRulesByCategory(context.Background(), args.Category)

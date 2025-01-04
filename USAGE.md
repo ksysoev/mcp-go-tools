@@ -120,51 +120,6 @@ mcp start --config config.yaml --loglevel debug
 mcp start --config config.yaml --logtext
 ```
 
-### Checking Code Patterns
-
-The MCP server will validate your code against defined patterns. Here are common patterns it checks:
-
-1. Constructor Pattern:
-```go
-// ✅ Valid
-func NewService(repo Repository) *Service {
-    return &Service{repo: repo}
-}
-
-// ❌ Invalid
-func CreateService(repo Repository) *Service {
-    svc := &Service{}
-    svc.repo = repo
-    return svc
-}
-```
-
-2. Error Handling:
-```go
-// ✅ Valid
-if err != nil {
-    return fmt.Errorf("process user: %w", err)
-}
-
-// ❌ Invalid
-if err != nil {
-    return err
-}
-```
-
-3. Interface Naming:
-```go
-// ✅ Valid
-type Reader interface {
-    Read(p []byte) (n int, error)
-}
-
-// ❌ Invalid
-type ReadInterface interface {
-    Read(p []byte) (n int, error)
-}
-```
-
 ## Advanced Usage
 
 ### Custom Pattern Rules
@@ -235,17 +190,11 @@ slog.SetDefault(logger)
 
 Common issues and solutions:
 
-1. **Pattern Not Matching**
-   - Verify template syntax
-   - Check for whitespace issues
-   - Validate regex patterns
-
-2. **Configuration Issues**
+1. **Configuration Issues**
    - Ensure YAML syntax is correct
    - Verify file paths
    - Check environment variables
 
-3. **Performance Optimization**
+2. **Performance Optimization**
    - Use specific pattern categories
-   - Optimize regex patterns
    - Configure appropriate log levels

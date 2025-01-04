@@ -12,31 +12,22 @@ type Config = []Rule
 
 // Rule defines a universal structure for all types of code generation rules
 type Rule struct {
-	Name        string       `mapstructure:"name"`
-	Category    string       `mapstructure:"category"`
-	Type        string       `mapstructure:"type"`
-	Description string       `mapstructure:"description"`
-	Pattern     RulePattern  `mapstructure:"pattern"`
-	Constraints []Constraint `mapstructure:"constraints"`
-	Examples    []Example    `mapstructure:"examples"`
-	AppliesTo   []string     `mapstructure:"applies_to"`
-	Priority    int          `mapstructure:"priority"`
-	IsRequired  bool         `mapstructure:"required"`
+	Name        string      `mapstructure:"name"`
+	Category    string      `mapstructure:"category"`
+	Type        string      `mapstructure:"type"`
+	Description string      `mapstructure:"description"`
+	Pattern     RulePattern `mapstructure:"pattern"`
+	Examples    []Example   `mapstructure:"examples"`
+	AppliesTo   []string    `mapstructure:"applies_to"`
+	Priority    int         `mapstructure:"priority"`
+	IsRequired  bool        `mapstructure:"required"`
 }
 
 // RulePattern defines how the rule should be implemented
 type RulePattern struct {
 	Template     string            `mapstructure:"template"`
 	Replacements map[string]string `mapstructure:"replacements"`
-	Validation   string            `mapstructure:"validation"`
 	Format       string            `mapstructure:"format"`
-}
-
-// Constraint defines limitations or requirements for a rule
-type Constraint struct {
-	Type    string      `mapstructure:"type"`
-	Value   interface{} `mapstructure:"value"`
-	Message string      `mapstructure:"message"`
 }
 
 // Example provides a usage example for a rule
@@ -68,28 +59,13 @@ func (r *Repository) convertRule(rule Rule) core.Rule {
 		Pattern: core.RulePattern{
 			Template:     rule.Pattern.Template,
 			Replacements: rule.Pattern.Replacements,
-			Validation:   rule.Pattern.Validation,
 			Format:       rule.Pattern.Format,
 		},
-		Constraints: convertConstraints(rule.Constraints),
-		Examples:    convertExamples(rule.Examples),
-		AppliesTo:   rule.AppliesTo,
-		Priority:    rule.Priority,
-		IsRequired:  rule.IsRequired,
+		Examples:   convertExamples(rule.Examples),
+		AppliesTo:  rule.AppliesTo,
+		Priority:   rule.Priority,
+		IsRequired: rule.IsRequired,
 	}
-}
-
-// convertConstraints converts internal Constraints to core.Constraints
-func convertConstraints(constraints []Constraint) []core.Constraint {
-	result := make([]core.Constraint, len(constraints))
-	for i, c := range constraints {
-		result[i] = core.Constraint{
-			Type:    c.Type,
-			Value:   c.Value,
-			Message: c.Message,
-		}
-	}
-	return result
 }
 
 // convertExamples converts internal Examples to core.Examples
@@ -153,20 +129,6 @@ func (r *Repository) GetApplicableRules(ctx context.Context, context string) ([]
 			}
 		}
 		return rules, nil
-	}
-}
-
-// ValidateCode validates the provided code against applicable rules
-func (r *Repository) ValidateCode(ctx context.Context, code, context string) (*core.ValidationResult, error) {
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-		result := &core.ValidationResult{
-			Valid:    true,
-			Messages: make([]string, 0),
-		}
-		return result, nil
 	}
 }
 
