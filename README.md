@@ -28,7 +28,7 @@ go install github.com/ksysoev/mcp-code-tools/cmd/mcp@latest
 - Command-line interface built with Cobra
 - Flexible configuration using Viper (supports file-based and environment variable configuration)
 - Structured logging with slog
-  - File output support with --logfile flag
+  - File output support with --logfile flag (writes to file instead of stdout)
   - JSON and text formats
   - Configurable log levels
   - Debug logging for request tracking
@@ -66,7 +66,7 @@ mcp start --config config.yaml --logtext
 ```
 
 #### Run with File Logging
-Run the server with logs written to both stdout and file:
+Run the server with logs written to a file instead of stdout:
 ```bash
 # JSON format (default)
 mcp start --config config.yaml --logfile=server.log
@@ -74,6 +74,8 @@ mcp start --config config.yaml --logfile=server.log
 # Text format with debug level for request tracking
 mcp start --config config.yaml --logfile=server.log --logtext --loglevel=debug
 ```
+
+Note: When --logfile is provided, logs will be written only to the specified file, not to stdout.
 
 ## Architecture
 
@@ -107,6 +109,7 @@ The application follows a clean, layered architecture:
 --config string     Config file path
 --loglevel string   Log level (debug, info, warn, error) (default "info")
 --logtext           Log in text format, otherwise JSON
+--logfile string    Log file path (if set, logs are written to file instead of stdout)
 ```
 
 ### Environment Variables

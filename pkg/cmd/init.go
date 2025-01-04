@@ -32,6 +32,8 @@ func InitCommands(build, version string) (*cobra.Command, error) {
 		Long:  "",
 	}
 
+	cmd.AddCommand(startCommand(args))
+
 	cmd.PersistentFlags().StringVar(&args.ConfigPath, "config", "", "config file path")
 	cmd.PersistentFlags().StringVar(&args.LogLevel, "loglevel", "info", "log level (debug, info, warn, error)")
 	cmd.PersistentFlags().BoolVar(&args.TextFormat, "logtext", false, "log in text format, otherwise JSON")

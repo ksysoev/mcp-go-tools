@@ -1,323 +1,324 @@
-# Example of a code pattern rule
-- name: "constructor_pattern"
-  category: "code_pattern"
-  type: "template"
-  description: "Standard constructor pattern for Go types"
-  pattern:
-    template: |
-      func New{{.TypeName}}({{.Params}}) *{{.TypeName}} {
-          return &{{.TypeName}}{
-              {{.Fields}}
-          }
-      }
-    format: "go"
-  applies_to: ["struct"]
-  priority: 1
-  required: true
-  examples:
-    - description: "Basic constructor"
-      code: |
-        func NewUser(name string, age int) *User {
-            return &User{
-                name: name,
-                age: age,
+rules:
+  # Example of a code pattern rule
+  - name: "constructor_pattern"
+    category: "code_pattern"
+    type: "template"
+    description: "Standard constructor pattern for Go types"
+    pattern:
+      template: |
+        func New{{.TypeName}}({{.Params}}) *{{.TypeName}} {
+            return &{{.TypeName}}{
+                {{.Fields}}
             }
         }
+      format: "go"
+    applies_to: ["struct"]
+    priority: 1
+    required: true
+    examples:
+      - description: "Basic constructor"
+        code: |
+          func NewUser(name string, age int) *User {
+              return &User{
+                  name: name,
+                  age: age,
+              }
+          }
 
-# Basic test pattern with testify
-- name: "basic_test_pattern"
-  category: "testing"
-  type: "template"
-  description: "Standard test pattern using testify assertions"
-  pattern:
-    template: |
-      func Test{{.Name}}(t *testing.T) {
-          // Arrange
-          assert := assert.New(t)
-          require := require.New(t)
-          
-          // Act
-          {{.TestLogic}}
-          
-          // Assert
-          require.NoError(err)
-          assert.Equal(expected, result)
-      }
-    format: "go"
-  applies_to: ["function", "method"]
-  priority: 1
-  required: true
-  examples:
-    - description: "Basic test with testify"
-      code: |
-        func TestCreateUser(t *testing.T) {
+  # Basic test pattern with testify
+  - name: "basic_test_pattern"
+    category: "testing"
+    type: "template"
+    description: "Standard test pattern using testify assertions"
+    pattern:
+      template: |
+        func Test{{.Name}}(t *testing.T) {
             // Arrange
             assert := assert.New(t)
             require := require.New(t)
             
             // Act
-            user, err := CreateUser("John", 25)
+            {{.TestLogic}}
             
             // Assert
             require.NoError(err)
-            assert.Equal("John", user.Name)
-            assert.Equal(25, user.Age)
+            assert.Equal(expected, result)
         }
-
-# Table-driven test pattern
-- name: "table_test_pattern"
-  category: "testing"
-  type: "template"
-  description: "Table-driven test pattern for multiple test cases"
-  pattern:
-    template: |
-      func Test{{.Name}}(t *testing.T) {
-          tests := []struct {
-              name    string
-              {{.InputFields}}
-              want    {{.OutputType}}
-              wantErr error
-          }{
-              {
-                  name: "{{.TestCaseName}}",
-                  {{.TestCaseFields}}
-              },
+      format: "go"
+    applies_to: ["function", "method"]
+    priority: 1
+    required: true
+    examples:
+      - description: "Basic test with testify"
+        code: |
+          func TestCreateUser(t *testing.T) {
+              // Arrange
+              assert := assert.New(t)
+              require := require.New(t)
+              
+              // Act
+              user, err := CreateUser("John", 25)
+              
+              // Assert
+              require.NoError(err)
+              assert.Equal("John", user.Name)
+              assert.Equal(25, user.Age)
           }
-          
-          for _, tt := range tests {
-              t.Run(tt.name, func(t *testing.T) {
-                  got, err := {{.FunctionName}}({{.InputParams}})
-                  if tt.wantErr != nil {
-                      assert.ErrorIs(t, err, tt.wantErr)
-                      return
-                  }
-                  assert.NoError(t, err)
-                  assert.Equal(t, tt.want, got)
-              })
-          }
-      }
-    format: "go"
-  applies_to: ["function", "method"]
-  priority: 1
-  required: true
 
-# Mock usage pattern
-- name: "mock_pattern"
-  category: "testing"
-  type: "template"
-  description: "Standard pattern for using mocks with mockery"
-  pattern:
-    template: |
-      func Test{{.Name}}WithMock(t *testing.T) {
-          // Arrange
-          mock := mocks.New{{.Interface}}(t)
-          mock.On("{{.Method}}", mock.Anything, {{.Params}}).
-              Return({{.ReturnValues}})
-          
-          sut := New{{.Type}}(mock)
-          
-          // Act
-          {{.TestLogic}}
-          
-          // Assert
-          mock.AssertExpectations(t)
-      }
-    format: "go"
-  applies_to: ["interface"]
-  priority: 1
-  required: true
-  examples:
-    - description: "Mock usage example"
-      code: |
-        func TestUserServiceWithMock(t *testing.T) {
-            // Arrange
-            mockRepo := mocks.NewUserRepository(t)
-            mockRepo.On("Get", mock.Anything, "123").
-                Return(&User{ID: "123", Name: "John"}, nil)
+  # Table-driven test pattern
+  - name: "table_test_pattern"
+    category: "testing"
+    type: "template"
+    description: "Table-driven test pattern for multiple test cases"
+    pattern:
+      template: |
+        func Test{{.Name}}(t *testing.T) {
+            tests := []struct {
+                name    string
+                {{.InputFields}}
+                want    {{.OutputType}}
+                wantErr error
+            }{
+                {
+                    name: "{{.TestCaseName}}",
+                    {{.TestCaseFields}}
+                },
+            }
             
-            service := NewUserService(mockRepo)
+            for _, tt := range tests {
+                t.Run(tt.name, func(t *testing.T) {
+                    got, err := {{.FunctionName}}({{.InputParams}})
+                    if tt.wantErr != nil {
+                        assert.ErrorIs(t, err, tt.wantErr)
+                        return
+                    }
+                    assert.NoError(t, err)
+                    assert.Equal(t, tt.want, got)
+                })
+            }
+        }
+      format: "go"
+    applies_to: ["function", "method"]
+    priority: 1
+    required: true
+
+  # Mock usage pattern
+  - name: "mock_pattern"
+    category: "testing"
+    type: "template"
+    description: "Standard pattern for using mocks with mockery"
+    pattern:
+      template: |
+        func Test{{.Name}}WithMock(t *testing.T) {
+            // Arrange
+            mock := mocks.New{{.Interface}}(t)
+            mock.On("{{.Method}}", mock.Anything, {{.Params}}).
+                Return({{.ReturnValues}})
+            
+            sut := New{{.Type}}(mock)
             
             // Act
-            user, err := service.GetUser(context.Background(), "123")
+            {{.TestLogic}}
             
             // Assert
-            assert.NoError(t, err)
-            assert.Equal(t, "John", user.Name)
-            mockRepo.AssertExpectations(t)
+            mock.AssertExpectations(t)
         }
+      format: "go"
+    applies_to: ["interface"]
+    priority: 1
+    required: true
+    examples:
+      - description: "Mock usage example"
+        code: |
+          func TestUserServiceWithMock(t *testing.T) {
+              // Arrange
+              mockRepo := mocks.NewUserRepository(t)
+              mockRepo.On("Get", mock.Anything, "123").
+                  Return(&User{ID: "123", Name: "John"}, nil)
+              
+              service := NewUserService(mockRepo)
+              
+              // Act
+              user, err := service.GetUser(context.Background(), "123")
+              
+              // Assert
+              assert.NoError(t, err)
+              assert.Equal(t, "John", user.Name)
+              mockRepo.AssertExpectations(t)
+          }
 
-# Test organization pattern
-- name: "test_suite_pattern"
-  category: "testing"
-  type: "template"
-  description: "Pattern for organizing related tests using testify suite"
-  pattern:
-    template: |
-      type {{.Name}}Suite struct {
-          suite.Suite
-          {{.Fields}}
-      }
-      
-      func (s *{{.Name}}Suite) SetupTest() {
-          {{.SetupLogic}}
-      }
-      
-      func (s *{{.Name}}Suite) Test{{.TestName}}() {
-          {{.TestLogic}}
-      }
-      
-      func Test{{.Name}}(t *testing.T) {
-          suite.Run(t, new({{.Name}}Suite))
-      }
-    format: "go"
-  applies_to: ["struct"]
-  priority: 1
-  required: true
-
-# Example of a naming rule
-- name: "naming_convention"
-  category: "style"
-  type: "template"
-  description: "Naming conventions for Go code"
-  pattern:
-    template: "{{.Name}}"
-    format: "go"
-  applies_to: ["interface", "variable", "function", "type"]
-  priority: 2
-  required: true
-
-# Example of an error handling rule
-- name: "error_handling"
-  category: "error"
-  type: "pattern"
-  description: "Standard error handling patterns"
-  pattern:
-    template: "return fmt.Errorf(\"{{.Operation}}: %w\", err)"
-    format: "go"
-  applies_to: ["function", "method"]
-  priority: 1
-  required: true
-
-# Function documentation pattern
-- name: "func_doc_standard"
-  category: "documentation"
-  type: "template"
-  description: "Standard documentation format for Go functions"
-  pattern:
-    template: |
-      // {{.Name}} {{.Action}} {{.Description}}.
-      // It {{.BehaviorDetails}}.
-      {{if .HasParams}}// {{.ParamDocs}}{{end}}
-      {{if .HasReturns}}// Returns {{.ReturnDocs}}{{end}}
-      {{if .HasErrors}}// Returns error if {{.ErrorConditions}}{{end}}
-    format: "go"
-  applies_to: ["function", "method"]
-  priority: 1
-  required: true
-  examples:
-    - description: "Simple function documentation"
-      code: |
-        // Sum adds two integers and returns their sum.
-        func Sum(a, b int) int
-    - description: "Complex function documentation"
-      code: |
-        // ProcessData validates and transforms the input data according to the specified options.
-        // It applies each transformation sequentially and stops on the first error encountered.
-        // Data is the raw input to be processed
-        // Options control the transformation behavior
-        // Returns processed data in the requested format
-        // Returns error if validation fails or any transformation step errors
-        func ProcessData(data []byte, opts *Options) ([]byte, error)
-
-# Package documentation pattern
-- name: "package_doc_standard"
-  category: "documentation"
-  type: "template"
-  description: "Standard documentation format for Go packages"
-  pattern:
-    template: |
-      // Package {{.Name}} {{.Description}}.
-      {{if .HasDetails}}//
-      // {{.Details}}{{end}}
-    format: "go"
-  applies_to: ["package"]
-  priority: 1
-  required: true
-  examples:
-    - description: "Package documentation"
-      code: |
-        // Package calculator provides basic arithmetic operations
-        // and advanced mathematical calculations.
-        package calculator
-
-# Interface documentation pattern
-- name: "interface_doc_standard"
-  category: "documentation"
-  type: "template"
-  description: "Standard documentation format for Go interfaces"
-  pattern:
-    template: |
-      // {{.Name}} {{.Description}}.
-      {{if .HasDetails}}//
-      // {{.Details}}{{end}}
-      {{range .Methods}}// {{.Name}} {{.Description}}.
-      // {{.BehaviorDetails}}{{end}}
-    format: "go"
-  applies_to: ["interface"]
-  priority: 1
-  required: true
-  examples:
-    - description: "Interface documentation"
-      code: |
-        // Reader is the interface that wraps the basic Read method.
-        //
-        // Read reads up to len(p) bytes into p. It returns the number of bytes
-        // read (0 <= n <= len(p)) and any error encountered.
-        type Reader interface {
-            Read(p []byte) (n int, err error)
+  # Test organization pattern
+  - name: "test_suite_pattern"
+    category: "testing"
+    type: "template"
+    description: "Pattern for organizing related tests using testify suite"
+    pattern:
+      template: |
+        type {{.Name}}Suite struct {
+            suite.Suite
+            {{.Fields}}
         }
+        
+        func (s *{{.Name}}Suite) SetupTest() {
+            {{.SetupLogic}}
+        }
+        
+        func (s *{{.Name}}Suite) Test{{.TestName}}() {
+            {{.TestLogic}}
+        }
+        
+        func Test{{.Name}}(t *testing.T) {
+            suite.Run(t, new({{.Name}}Suite))
+        }
+      format: "go"
+    applies_to: ["struct"]
+    priority: 1
+    required: true
 
-# Constant and variable documentation pattern
-- name: "const_var_doc_standard"
-  category: "documentation"
-  type: "template"
-  description: "Standard documentation format for Go constants and variables"
-  pattern:
-    template: |
-      // {{.Name}} {{.Description}}
-      {{if .HasDetails}}// {{.Details}}{{end}}
-    format: "go"
-  applies_to: ["const", "var"]
-  priority: 1
-  required: true
-  examples:
-    - description: "Constant documentation"
-      code: |
-        // MaxRetries is the maximum number of retry attempts for network operations
-        const MaxRetries = 3
-    - description: "Variable documentation"
-      code: |
-        // DefaultTimeout is the default duration before operations timeout
-        var DefaultTimeout = 30 * time.Second
+  # Example of a naming rule
+  - name: "naming_convention"
+    category: "style"
+    type: "template"
+    description: "Naming conventions for Go code"
+    pattern:
+      template: "{{.Name}}"
+      format: "go"
+    applies_to: ["interface", "variable", "function", "type"]
+    priority: 2
+    required: true
 
-# Concurrency documentation pattern
-- name: "concurrency_doc_standard"
-  category: "documentation"
-  type: "template"
-  description: "Documentation pattern for concurrent operations"
-  pattern:
-    template: |
-      // {{.Name}} {{.Description}}.
-      // This {{if .IsConcurrentSafe}}is{{else}}is not{{end}} safe for concurrent use.
-      {{if .HasSyncRequirements}}// Synchronization requirements: {{.SyncRequirements}}{{end}}
-    format: "go"
-  applies_to: ["function", "method", "type"]
-  priority: 1
-  required: true
-  examples:
-    - description: "Concurrent safe function"
-      code: |
-        // ProcessQueue handles incoming requests from the queue.
-        // This is safe for concurrent use.
-        // Synchronization requirements: Caller must ensure queue is initialized.
-        func ProcessQueue(ctx context.Context, queue *Queue)
+  # Example of an error handling rule
+  - name: "error_handling"
+    category: "error"
+    type: "pattern"
+    description: "Standard error handling patterns"
+    pattern:
+      template: "return fmt.Errorf(\"{{.Operation}}: %w\", err)"
+      format: "go"
+    applies_to: ["function", "method"]
+    priority: 1
+    required: true
+
+  # Function documentation pattern
+  - name: "func_doc_standard"
+    category: "documentation"
+    type: "template"
+    description: "Standard documentation format for Go functions"
+    pattern:
+      template: |
+        // {{.Name}} {{.Action}} {{.Description}}.
+        // It {{.BehaviorDetails}}.
+        {{if .HasParams}}// {{.ParamDocs}}{{end}}
+        {{if .HasReturns}}// Returns {{.ReturnDocs}}{{end}}
+        {{if .HasErrors}}// Returns error if {{.ErrorConditions}}{{end}}
+      format: "go"
+    applies_to: ["function", "method"]
+    priority: 1
+    required: true
+    examples:
+      - description: "Simple function documentation"
+        code: |
+          // Sum adds two integers and returns their sum.
+          func Sum(a, b int) int
+      - description: "Complex function documentation"
+        code: |
+          // ProcessData validates and transforms the input data according to the specified options.
+          // It applies each transformation sequentially and stops on the first error encountered.
+          // Data is the raw input to be processed
+          // Options control the transformation behavior
+          // Returns processed data in the requested format
+          // Returns error if validation fails or any transformation step errors
+          func ProcessData(data []byte, opts *Options) ([]byte, error)
+
+  # Package documentation pattern
+  - name: "package_doc_standard"
+    category: "documentation"
+    type: "template"
+    description: "Standard documentation format for Go packages"
+    pattern:
+      template: |
+        // Package {{.Name}} {{.Description}}.
+        {{if .HasDetails}}//
+        // {{.Details}}{{end}}
+      format: "go"
+    applies_to: ["package"]
+    priority: 1
+    required: true
+    examples:
+      - description: "Package documentation"
+        code: |
+          // Package calculator provides basic arithmetic operations
+          // and advanced mathematical calculations.
+          package calculator
+
+  # Interface documentation pattern
+  - name: "interface_doc_standard"
+    category: "documentation"
+    type: "template"
+    description: "Standard documentation format for Go interfaces"
+    pattern:
+      template: |
+        // {{.Name}} {{.Description}}.
+        {{if .HasDetails}}//
+        // {{.Details}}{{end}}
+        {{range .Methods}}// {{.Name}} {{.Description}}.
+        // {{.BehaviorDetails}}{{end}}
+      format: "go"
+    applies_to: ["interface"]
+    priority: 1
+    required: true
+    examples:
+      - description: "Interface documentation"
+        code: |
+          // Reader is the interface that wraps the basic Read method.
+          //
+          // Read reads up to len(p) bytes into p. It returns the number of bytes
+          // read (0 <= n <= len(p)) and any error encountered.
+          type Reader interface {
+              Read(p []byte) (n int, err error)
+          }
+
+  # Constant and variable documentation pattern
+  - name: "const_var_doc_standard"
+    category: "documentation"
+    type: "template"
+    description: "Standard documentation format for Go constants and variables"
+    pattern:
+      template: |
+        // {{.Name}} {{.Description}}
+        {{if .HasDetails}}// {{.Details}}{{end}}
+      format: "go"
+    applies_to: ["const", "var"]
+    priority: 1
+    required: true
+    examples:
+      - description: "Constant documentation"
+        code: |
+          // MaxRetries is the maximum number of retry attempts for network operations
+          const MaxRetries = 3
+      - description: "Variable documentation"
+        code: |
+          // DefaultTimeout is the default duration before operations timeout
+          var DefaultTimeout = 30 * time.Second
+
+  # Concurrency documentation pattern
+  - name: "concurrency_doc_standard"
+    category: "documentation"
+    type: "template"
+    description: "Documentation pattern for concurrent operations"
+    pattern:
+      template: |
+        // {{.Name}} {{.Description}}.
+        // This {{if .IsConcurrentSafe}}is{{else}}is not{{end}} safe for concurrent use.
+        {{if .HasSyncRequirements}}// Synchronization requirements: {{.SyncRequirements}}{{end}}
+      format: "go"
+    applies_to: ["function", "method", "type"]
+    priority: 1
+    required: true
+    examples:
+      - description: "Concurrent safe function"
+        code: |
+          // ProcessQueue handles incoming requests from the queue.
+          // This is safe for concurrent use.
+          // Synchronization requirements: Caller must ensure queue is initialized.
+          func ProcessQueue(ctx context.Context, queue *Queue)

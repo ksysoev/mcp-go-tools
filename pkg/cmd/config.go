@@ -20,14 +20,12 @@ type Config struct {
 // It returns a pointer to a config struct and an error.
 // It returns an error if the configuration file cannot be read or if the configuration cannot be unmarshaled.
 func initConfig(arg *args) (*Config, error) {
-	v := viper.NewWithOptions(viper.ExperimentalBindStruct())
+	v := viper.NewWithOptions()
 
-	if arg.ConfigPath != "" {
-		v.SetConfigFile(arg.ConfigPath)
+	v.SetConfigFile(arg.ConfigPath)
 
-		if err := v.ReadInConfig(); err != nil {
-			return nil, fmt.Errorf("failed to read config: %w", err)
-		}
+	if err := v.ReadInConfig(); err != nil {
+		return nil, fmt.Errorf("failed to read config: %w", err)
 	}
 
 	var cfg Config

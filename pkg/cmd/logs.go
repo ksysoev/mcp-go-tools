@@ -21,20 +21,15 @@ func initLogger(arg *args) error {
 		Level: logLevel,
 	}
 
-	// Set up writers
-	writers := []io.Writer{os.Stdout}
-	var logFile *os.File
+	// Set up writer based on logfile flag
+	var writer io.Writer = os.Stdout
 	if arg.LogFile != "" {
 		var err error
-		logFile, err = os.OpenFile(arg.LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		writer, err = os.OpenFile(arg.LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err != nil {
 			return fmt.Errorf("failed to open log file: %w", err)
 		}
-		writers = append(writers, logFile)
 	}
-
-	// Create multi-writer
-	writer := io.MultiWriter(writers...)
 
 	// Create handler based on format
 	var logHandler slog.Handler
