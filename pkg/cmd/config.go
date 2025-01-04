@@ -5,10 +5,13 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/ksysoev/mcp-code-tools/pkg/api"
 	"github.com/spf13/viper"
 )
 
-type Config struct{}
+type Config struct {
+	API api.Config `mapstructure:"api"`
+}
 
 // initConfig initializes the configuration by reading from the specified config file.
 // It takes configPath of type string which is the path to the configuration file.
