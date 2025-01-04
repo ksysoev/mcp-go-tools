@@ -31,7 +31,7 @@ go install github.com/ksysoev/mcp-code-tools/cmd/mcp@latest
 - Server management commands
 - Signal handling for graceful shutdown
 
-## Usage
+## Quick Start
 
 ### Basic Command Structure
 
@@ -39,7 +39,9 @@ go install github.com/ksysoev/mcp-code-tools/cmd/mcp@latest
 mcp [command] [flags]
 ```
 
-### Commands
+For detailed usage examples and patterns, see [USAGE.md](USAGE.md).
+
+### Common Commands
 
 #### Start Server
 Starts the MCP server with the specified configuration:
