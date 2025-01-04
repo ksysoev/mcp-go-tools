@@ -28,6 +28,10 @@ go install github.com/ksysoev/mcp-code-tools/cmd/mcp@latest
 - Command-line interface built with Cobra
 - Flexible configuration using Viper (supports file-based and environment variable configuration)
 - Structured logging with slog
+  - File output support with --logfile flag
+  - JSON and text formats
+  - Configurable log levels
+  - Debug logging for request tracking
 - Server management commands
 - Signal handling for graceful shutdown
 
@@ -59,6 +63,16 @@ mcp start --config config.yaml
 Run the server with human-readable text logging:
 ```bash
 mcp start --config config.yaml --logtext
+```
+
+#### Run with File Logging
+Run the server with logs written to both stdout and file:
+```bash
+# JSON format (default)
+mcp start --config config.yaml --logfile=server.log
+
+# Text format with debug level for request tracking
+mcp start --config config.yaml --logfile=server.log --logtext --loglevel=debug
 ```
 
 ## Architecture
@@ -149,9 +163,19 @@ rules:
 The project is in active development with the following components:
 - ✅ CLI framework and command structure
 - ✅ Configuration management
-- ✅ Logging system
-- 🚧 MCP protocol integration
-- 🚧 Tool registration system
+- ✅ Enhanced logging system
+  - File output support
+  - Structured JSON/text formats
+  - Configurable log levels
+  - Comprehensive debug logging
+- ✅ MCP protocol integration
+  - Stdio transport implementation
+  - Request handler debug logging
+  - Error tracking and reporting
+- ✅ Tool registration system
+  - Category-based rule management
+  - Template handling
+  - Example management
 - 🚧 Resource repository
 - 🚧 Core service implementation
 
