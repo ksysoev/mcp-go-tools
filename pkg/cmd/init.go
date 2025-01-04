@@ -14,6 +14,7 @@ type args struct {
 	LogLevel   string `mapstructure:"loglevel"`
 	ConfigPath string `mapstructure:"config"`
 	TextFormat bool   `mapstructure:"logtext"`
+	LogFile    string `mapstructure:"logfile"`
 }
 
 // InitCommands initializes and returns the root command for the Backend for Frontend (BFF) service.
@@ -34,6 +35,7 @@ func InitCommands(build, version string) (*cobra.Command, error) {
 	cmd.PersistentFlags().StringVar(&args.ConfigPath, "config", "", "config file path")
 	cmd.PersistentFlags().StringVar(&args.LogLevel, "loglevel", "info", "log level (debug, info, warn, error)")
 	cmd.PersistentFlags().BoolVar(&args.TextFormat, "logtext", false, "log in text format, otherwise JSON")
+	cmd.PersistentFlags().StringVar(&args.LogFile, "logfile", "", "log file path (if not set, logs to stdout)")
 
 	if err := viper.BindPFlags(cmd.PersistentFlags()); err != nil {
 		return nil, fmt.Errorf("failed to parse env args: %w", err)
