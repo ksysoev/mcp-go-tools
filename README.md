@@ -26,9 +26,9 @@ go install github.com/ksysoev/mcp-code-tools/cmd/mcp@latest
 ## Features
 
 - Command-line interface built with Cobra
-- Flexible configuration using Viper (supports file-based and environment variable configuration)
+- Flexible configuration using YAML/JSON files
 - Structured logging with slog
-  - File output support with --logfile flag (writes to file instead of stdout)
+  - File output support with --log-file flag (writes to file instead of stdout)
   - JSON and text formats
   - Configurable log levels
   - Debug logging for request tracking
@@ -50,7 +50,7 @@ For detailed usage examples and patterns, see [USAGE.md](USAGE.md).
 #### Start Server
 Starts the MCP server with the specified configuration:
 ```bash
-mcp start --config config.yaml --loglevel debug
+mcp start --config config.yaml --log-level debug
 ```
 
 #### Run with JSON Logging
@@ -62,20 +62,20 @@ mcp start --config config.yaml
 #### Run with Text Logging
 Run the server with human-readable text logging:
 ```bash
-mcp start --config config.yaml --logtext
+mcp start --config config.yaml --log-text
 ```
 
 #### Run with File Logging
 Run the server with logs written to a file instead of stdout:
 ```bash
 # JSON format (default)
-mcp start --config config.yaml --logfile=server.log
+mcp start --config config.yaml --log-file=server.log
 
 # Text format with debug level for request tracking
-mcp start --config config.yaml --logfile=server.log --logtext --loglevel=debug
+mcp start --config config.yaml --log-file=server.log --log-text --log-level=debug
 ```
 
-Note: When --logfile is provided, logs will be written only to the specified file, not to stdout.
+Note: When --log-file is provided, logs will be written only to the specified file, not to stdout.
 
 ## Architecture
 
@@ -106,20 +106,10 @@ The application follows a clean, layered architecture:
 ### Global Flags
 
 ```bash
---config string     Config file path
---loglevel string   Log level (debug, info, warn, error) (default "info")
---logtext           Log in text format, otherwise JSON
---logfile string    Log file path (if set, logs are written to file instead of stdout)
-```
-
-### Environment Variables
-
-All configuration options can also be set via environment variables. Environment variables are automatically mapped from the configuration structure (dots are replaced with underscores).
-
-Example environment variables:
-```bash
-# Log level configuration
-MCP_LOGLEVEL=debug
+--config string      Config file path
+--log-level string   Log level (debug, info, warn, error) (default "info")
+--log-text          Log in text format, otherwise JSON
+--log-file string   Log file path (if set, logs to stdout)
 ```
 
 ### Configuration File
@@ -136,7 +126,6 @@ rules:
     - name: "another-resource"
       data: "more-data"
 ```
-
 
 ## Project Structure
 

@@ -1,28 +1,24 @@
 // Package cmd implements the command-line interface for the MCP code tools server.
 //
 // It provides command initialization, configuration management, and logging setup.
-// The package uses cobra for CLI implementation and viper for configuration handling,
-// supporting both command-line flags and environment variables.
+// The package uses cobra for CLI implementation and handles command-line flags
+// for configuring the server's behavior.
 package cmd
 
 import (
-	"fmt"
 	"log/slog"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // args holds all command-line arguments and configuration options.
-// It supports both command-line flags and environment variables through
-// viper's mapstructure tags.
 type args struct {
 	build      string
 	version    string
-	LogLevel   string `mapstructure:"loglevel"`
-	ConfigPath string `mapstructure:"config"`
-	TextFormat bool   `mapstructure:"logtext"`
-	LogFile    string `mapstructure:"logfile"`
+	LogLevel   string
+	ConfigPath string
+	TextFormat bool
+	LogFile    string
 }
 
 // InitCommands initializes and returns the root command for the MCP code tools server.
@@ -44,19 +40,9 @@ func InitCommands(build, version string) (*cobra.Command, error) {
 	cmd.AddCommand(startCommand(args))
 
 	cmd.PersistentFlags().StringVar(&args.ConfigPath, "config", "", "config file path")
-	cmd.PersistentFlags().StringVar(&args.LogLevel, "loglevel", "info", "log level (debug, info, warn, error)")
-	cmd.PersistentFlags().BoolVar(&args.TextFormat, "logtext", false, "log in text format, otherwise JSON")
-	cmd.PersistentFlags().StringVar(&args.LogFile, "logfile", "", "log file path (if not set, logs to stdout)")
-
-	if err := viper.BindPFlags(cmd.PersistentFlags()); err != nil {
-		return nil, fmt.Errorf("failed to parse env args: %w", err)
-	}
-
-	viper.AutomaticEnv()
-
-	if err := viper.Unmarshal(args); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal args: %w", err)
-	}
+	cmd.PersistentFlags().StringVar(&args.LogLevel, "log-level", "info", "log level (debug, info, warn, error)")
+	cmd.PersistentFlags().BoolVar(&args.TextFormat, "log-text", false, "log in text format, otherwise JSON")
+	cmd.PersistentFlags().StringVar(&args.LogFile, "log-file", "", "log file path (if not set, logs to stdout)")
 
 	return cmd, nil
 }
