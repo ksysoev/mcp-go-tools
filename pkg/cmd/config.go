@@ -6,11 +6,13 @@ import (
 	"strings"
 
 	"github.com/ksysoev/mcp-code-tools/pkg/api"
+	"github.com/ksysoev/mcp-code-tools/pkg/repo/static"
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	API api.Config `mapstructure:"api"`
+	API   api.Config    `mapstructure:"api"`
+	Rules static.Config `mapstructure:"rules"`
 }
 
 // initConfig initializes the configuration by reading from the specified config file.

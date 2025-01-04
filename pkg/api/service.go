@@ -10,16 +10,20 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+type ToolHandler interface{}
+
 type Config struct {
 }
 
 type Service struct {
-	config *Config
+	config  *Config
+	handler ToolHandler
 }
 
-func New(cfg *Config) *Service {
+func New(cfg *Config, handler ToolHandler) *Service {
 	return &Service{
-		config: cfg,
+		config:  cfg,
+		handler: handler,
 	}
 }
 
