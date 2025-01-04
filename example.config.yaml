@@ -1,104 +1,103 @@
-rules:
-  # Example of a code pattern rule
-  - name: "constructor_pattern"
-    category: "code_pattern"
-    type: "template"
-    description: "Standard constructor pattern for Go types"
-    pattern:
-      template: |
-        func New{{.TypeName}}({{.Params}}) *{{.TypeName}} {
-            return &{{.TypeName}}{
-                {{.Fields}}
-            }
-        }
-      format: "go"
-      validation: "^func New[A-Z][a-zA-Z0-9]*\\("
-    applies_to: ["struct"]
-    priority: 1
-    required: true
-    examples:
-      - description: "Basic constructor"
-        code: |
-          func NewUser(name string, age int) *User {
-              return &User{
-                  name: name,
-                  age: age,
-              }
+# Example of a code pattern rule
+- name: "constructor_pattern"
+  category: "code_pattern"
+  type: "template"
+  description: "Standard constructor pattern for Go types"
+  pattern:
+    template: |
+      func New{{.TypeName}}({{.Params}}) *{{.TypeName}} {
+          return &{{.TypeName}}{
+              {{.Fields}}
           }
-
-  # Example of a testing rule
-  - name: "test_pattern"
-    category: "testing"
-    type: "template"
-    description: "Standard test pattern with table-driven tests"
-    pattern:
-      template: |
-        func Test{{.Name}}(t *testing.T) {
-            tests := []struct{
-                name string
-                {{.TestFields}}
-            }{
-                {{.TestCases}}
-            }
-            for _, tt := range tests {
-                t.Run(tt.name, func(t *testing.T) {
-                    {{.TestLogic}}
-                })
+      }
+    format: "go"
+    validation: "^func New[A-Z][a-zA-Z0-9]*\\("
+  applies_to: ["struct"]
+  priority: 1
+  required: true
+  examples:
+    - description: "Basic constructor"
+      code: |
+        func NewUser(name string, age int) *User {
+            return &User{
+                name: name,
+                age: age,
             }
         }
-      format: "go"
-    applies_to: ["function", "method"]
-    priority: 1
-    required: true
 
-  # Example of a naming rule
-  - name: "naming_convention"
-    category: "style"
-    type: "constraint"
-    description: "Naming conventions for Go code"
-    pattern:
-      validation: "^[a-z][a-zA-Z0-9]*$|^[A-Z][a-zA-Z0-9]*$"
-    constraints:
-      - type: "interface_suffix"
-        value: "er"
-        message: "Interface names should end with 'er' for single-method interfaces"
-      - type: "var_length"
-        value: 30
-        message: "Variable names should not exceed 30 characters"
-    applies_to: ["interface", "variable", "function", "type"]
-    priority: 2
-    required: true
+# Example of a testing rule
+- name: "test_pattern"
+  category: "testing"
+  type: "template"
+  description: "Standard test pattern with table-driven tests"
+  pattern:
+    template: |
+      func Test{{.Name}}(t *testing.T) {
+          tests := []struct{
+              name string
+              {{.TestFields}}
+          }{
+              {{.TestCases}}
+          }
+          for _, tt := range tests {
+              t.Run(tt.name, func(t *testing.T) {
+                  {{.TestLogic}}
+              })
+          }
+      }
+    format: "go"
+  applies_to: ["function", "method"]
+  priority: 1
+  required: true
 
-  # Example of an error handling rule
-  - name: "error_handling"
-    category: "error"
-    type: "pattern"
-    description: "Standard error handling patterns"
-    pattern:
-      template: "return fmt.Errorf(\"{{.Operation}}: %w\", err)"
-      validation: "return (fmt\\.Errorf|errors\\.Wrap)\\("
-    constraints:
-      - type: "required_check"
-        value: "if err != nil"
-        message: "Must check errors"
-    applies_to: ["function", "method"]
-    priority: 1
-    required: true
+# Example of a naming rule
+- name: "naming_convention"
+  category: "style"
+  type: "constraint"
+  description: "Naming conventions for Go code"
+  pattern:
+    validation: "^[a-z][a-zA-Z0-9]*$|^[A-Z][a-zA-Z0-9]*$"
+  constraints:
+    - type: "interface_suffix"
+      value: "er"
+      message: "Interface names should end with 'er' for single-method interfaces"
+    - type: "var_length"
+      value: 30
+      message: "Variable names should not exceed 30 characters"
+  applies_to: ["interface", "variable", "function", "type"]
+  priority: 2
+  required: true
 
-  # Example of a documentation rule
-  - name: "doc_standard"
-    category: "documentation"
-    type: "pattern"
-    description: "Standard documentation format for Go code"
-    pattern:
-      template: |
-        // {{.Name}} {{.Action}}
-        // {{.Description}}
-      validation: "^// [A-Z].*\\.$"
-    constraints:
-      - type: "required_sections"
-        value: ["Parameters", "Returns"]
-        message: "Documentation must include parameters and returns sections"
-    applies_to: ["function", "type", "package"]
-    priority: 1
-    required: true
+# Example of an error handling rule
+- name: "error_handling"
+  category: "error"
+  type: "pattern"
+  description: "Standard error handling patterns"
+  pattern:
+    template: "return fmt.Errorf(\"{{.Operation}}: %w\", err)"
+    validation: "return (fmt\\.Errorf|errors\\.Wrap)\\("
+  constraints:
+    - type: "required_check"
+      value: "if err != nil"
+      message: "Must check errors"
+  applies_to: ["function", "method"]
+  priority: 1
+  required: true
+
+# Example of a documentation rule
+- name: "doc_standard"
+  category: "documentation"
+  type: "pattern"
+  description: "Standard documentation format for Go code"
+  pattern:
+    template: |
+      // {{.Name}} {{.Action}}
+      // {{.Description}}
+    validation: "^// [A-Z].*\\.$"
+  constraints:
+    - type: "required_sections"
+      value: ["Parameters", "Returns"]
+      message: "Documentation must include parameters and returns sections"
+  applies_to: ["function", "type", "package"]
+  priority: 1
+  required: true

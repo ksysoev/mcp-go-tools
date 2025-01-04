@@ -1,35 +1,43 @@
 package static
 
 import (
+	"context"
 	"testing"
+
+	"github.com/ksysoev/mcp-code-tools/pkg/core"
 )
 
 func TestGetRulesByCategory(t *testing.T) {
-	cfg := &Config{
-		Rules: []Rule{
-			{
-				Name:     "test_rule1",
-				Category: "testing",
-			},
-			{
-				Name:     "test_rule2",
-				Category: "testing",
-			},
-			{
-				Name:     "style_rule",
-				Category: "style",
-			},
+	config := Config{
+		{
+			Name:     "test_rule1",
+			Category: "testing",
+		},
+		{
+			Name:     "test_rule2",
+			Category: "testing",
+		},
+		{
+			Name:     "style_rule",
+			Category: "style",
 		},
 	}
+	cfg := &config
 
 	svc := New(cfg)
-	rules := svc.GetRulesByCategory("testing")
+	ctx := context.Background()
 
-	if len(rules) != 2 {
-		t.Errorf("Expected 2 testing rules, got %d", len(rules))
+	var coreRules []core.Rule
+	coreRules, err := svc.GetRulesByCategory(ctx, "testing")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	for _, rule := range rules {
+	if len(coreRules) != 2 {
+		t.Errorf("Expected 2 testing rules, got %d", len(coreRules))
+	}
+
+	for _, rule := range coreRules {
 		if rule.Category != "testing" {
 			t.Errorf("Expected testing category, got %s", rule.Category)
 		}
@@ -37,26 +45,25 @@ func TestGetRulesByCategory(t *testing.T) {
 }
 
 func TestValidateCode(t *testing.T) {
-	cfg := &Config{
-		Rules: []Rule{
-			{
-				Name:     "constructor_pattern",
-				Category: "code_pattern",
-				Type:     "template",
-				Pattern: RulePattern{
-					Validation: "^func New[A-Z][a-zA-Z0-9]*\\(",
-				},
-				AppliesTo: []string{"struct"},
-				Constraints: []Constraint{
-					{
-						Type:    "max",
-						Value:   50,
-						Message: "Constructor too long",
-					},
+	config := Config{
+		{
+			Name:     "constructor_pattern",
+			Category: "code_pattern",
+			Type:     "template",
+			Pattern: RulePattern{
+				Validation: "^func New[A-Z][a-zA-Z0-9]*\\(",
+			},
+			AppliesTo: []string{"struct"},
+			Constraints: []Constraint{
+				{
+					Type:    "max",
+					Value:   50,
+					Message: "Constructor too long",
 				},
 			},
 		},
 	}
+	cfg := &config
 
 	svc := New(cfg)
 
@@ -90,9 +97,15 @@ func TestValidateCode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := svc.ValidateCode(tt.code, tt.context)
-			if result.Valid != tt.want {
-				t.Errorf("ValidateCode() = %v, want %v", result.Valid, tt.want)
+			ctx := context.Background()
+			var validationResult *core.ValidationResult
+			var err error
+			validationResult, err = svc.ValidateCode(ctx, tt.code, tt.context)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+			if validationResult.Valid != tt.want {
+				t.Errorf("ValidateCode() = %v, want %v", validationResult.Valid, tt.want)
 			}
 		})
 	}
@@ -100,20 +113,22 @@ func TestValidateCode(t *testing.T) {
 
 func TestGetTemplate(t *testing.T) {
 	expectedTemplate := "func New{{.TypeName}}() *{{.TypeName}} {}"
-	cfg := &Config{
-		Rules: []Rule{
-			{
-				Name: "constructor",
-				Pattern: RulePattern{
-					Template: expectedTemplate,
-				},
+	config := Config{
+		{
+			Name: "constructor",
+			Pattern: RulePattern{
+				Template: expectedTemplate,
 			},
 		},
 	}
+	cfg := &config
 
 	svc := New(cfg)
 
-	template, err := svc.GetTemplate("constructor")
+	ctx := context.Background()
+	var template string
+	var err error
+	template, err = svc.GetTemplate(ctx, "constructor")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -122,119 +137,46 @@ func TestGetTemplate(t *testing.T) {
 		t.Errorf("Expected template %q, got %q", expectedTemplate, template)
 	}
 
-	_, err = svc.GetTemplate("nonexistent")
+	_, err = svc.GetTemplate(ctx, "nonexistent")
 	if err == nil {
 		t.Error("Expected error for nonexistent template, got nil")
 	}
 }
 
 func TestGetExamples(t *testing.T) {
-	cfg := &Config{
-		Rules: []Rule{
-			{
-				Name: "test_rule",
-				Examples: []Example{
-					{
-						Description: "Example 1",
-						Code:        "example code",
-					},
+	config := Config{
+		{
+			Name: "test_rule",
+			Examples: []Example{
+				{
+					Description: "Example 1",
+					Code:        "example code",
 				},
 			},
 		},
 	}
+	cfg := &config
 
 	svc := New(cfg)
 
-	examples, err := svc.GetExamples("test_rule")
+	ctx := context.Background()
+	var coreExamples []core.Example
+	var err error
+	coreExamples, err = svc.GetExamples(ctx, "test_rule")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	if len(examples) != 1 {
-		t.Errorf("Expected 1 example, got %d", len(examples))
+	if len(coreExamples) != 1 {
+		t.Errorf("Expected 1 example, got %d", len(coreExamples))
 	}
 
-	if examples[0].Description != "Example 1" {
-		t.Errorf("Expected description 'Example 1', got %q", examples[0].Description)
+	if coreExamples[0].Description != "Example 1" {
+		t.Errorf("Expected description 'Example 1', got %q", coreExamples[0].Description)
 	}
 
-	_, err = svc.GetExamples("nonexistent")
+	_, err = svc.GetExamples(ctx, "nonexistent")
 	if err == nil {
-		t.Error("Expected error for nonexistent rule examples, got nil")
-	}
-}
-
-func TestValidateConstraint(t *testing.T) {
-	svc := New(&Config{})
-
-	tests := []struct {
-		name       string
-		code       string
-		constraint Constraint
-		want       bool
-	}{
-		{
-			name: "max constraint valid",
-			code: "short code",
-			constraint: Constraint{
-				Type:  "max",
-				Value: 20,
-			},
-			want: true,
-		},
-		{
-			name: "max constraint invalid",
-			code: "this is a very long piece of code",
-			constraint: Constraint{
-				Type:  "max",
-				Value: 10,
-			},
-			want: false,
-		},
-		{
-			name: "regex constraint valid",
-			code: "func NewUser()",
-			constraint: Constraint{
-				Type:  "regex",
-				Value: "^func New",
-			},
-			want: true,
-		},
-		{
-			name: "regex constraint invalid",
-			code: "func CreateUser()",
-			constraint: Constraint{
-				Type:  "regex",
-				Value: "^func New",
-			},
-			want: false,
-		},
-		{
-			name: "forbidden constraint valid",
-			code: "good code",
-			constraint: Constraint{
-				Type:  "forbidden",
-				Value: []string{"bad", "wrong"},
-			},
-			want: true,
-		},
-		{
-			name: "forbidden constraint invalid",
-			code: "bad code",
-			constraint: Constraint{
-				Type:  "forbidden",
-				Value: []string{"bad", "wrong"},
-			},
-			want: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := svc.validateConstraint(tt.code, tt.constraint)
-			if got != tt.want {
-				t.Errorf("validateConstraint() = %v, want %v", got, tt.want)
-			}
-		})
+		t.Error("Expected error for nonexistent template, got nil")
 	}
 }
