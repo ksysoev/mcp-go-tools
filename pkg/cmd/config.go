@@ -10,15 +10,23 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Config represents the complete application configuration structure.
+// It combines API service configuration and rule definitions loaded from
+// configuration files and environment variables.
 type Config struct {
-	API   api.Config    `mapstructure:"api"`
+	// API holds the MCP server configuration
+	API api.Config `mapstructure:"api"`
+	// Rules defines the code generation rules and patterns
 	Rules static.Config `mapstructure:"rules"`
 }
 
-// initConfig initializes the configuration by reading from the specified config file.
-// It takes configPath of type string which is the path to the configuration file.
-// It returns a pointer to a config struct and an error.
-// It returns an error if the configuration file cannot be read or if the configuration cannot be unmarshaled.
+// initConfig initializes the configuration from the specified file and environment.
+// It supports both YAML/JSON configuration files and environment variables,
+// where environment variables override file settings. Environment variables
+// use underscore (_) as separator for nested fields (e.g., "api_port").
+//
+// The function logs the final configuration at debug level for troubleshooting.
+// Returns error if the configuration file cannot be read or parsed.
 func initConfig(arg *args) (*Config, error) {
 	v := viper.NewWithOptions()
 

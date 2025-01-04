@@ -1,3 +1,8 @@
+// Package api implements the MCP (Model Context Protocol) server functionality.
+//
+// It provides a Service that registers and handles MCP tools for code generation rule management.
+// The package uses stdio transport for MCP communication and supports concurrent operations
+// through error groups. Each tool is registered with debug logging for request tracking.
 package api
 
 import (
@@ -13,6 +18,9 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// ToolHandler defines the interface for handling code generation rule operations.
+// Implementations must be safe for concurrent use as methods may be called
+// simultaneously by different MCP tool handlers.
 type ToolHandler interface {
 	GetRulesByCategory(ctx context.Context, category string) ([]core.Rule, error)
 	GetRulesByType(ctx context.Context, ruleType string) ([]core.Rule, error)
@@ -21,14 +29,21 @@ type ToolHandler interface {
 	GetExamples(ctx context.Context, ruleName string) ([]core.Example, error)
 }
 
+// Config holds the service configuration parameters.
+// Currently empty but maintained for future configuration options.
 type Config struct {
 }
 
+// Service implements the MCP server functionality for code generation rules.
+// It registers tools for rule management and handles their execution through
+// the provided ToolHandler. The service is safe for concurrent use.
 type Service struct {
 	config  *Config
 	handler ToolHandler
 }
 
+// New creates a new Service instance with the provided configuration and handler.
+// The handler must be properly initialized and safe for concurrent use.
 func New(cfg *Config, handler ToolHandler) *Service {
 	return &Service{
 		config:  cfg,
@@ -36,6 +51,10 @@ func New(cfg *Config, handler ToolHandler) *Service {
 	}
 }
 
+// Run starts the MCP server and begins handling tool requests.
+// It sets up all available tools and starts the server with stdio transport.
+// The server runs until the context is cancelled or an error occurs.
+// Returns error if tool setup fails or server encounters an error.
 func (s *Service) Run(ctx context.Context) error {
 	server := mcp.NewServer(stdio.NewStdioServerTransport())
 
@@ -65,24 +84,32 @@ func (s *Service) Run(ctx context.Context) error {
 	return nil
 }
 
-// Tool argument types
+// Tool argument types define the expected input parameters for each tool.
+// These types are used for JSON unmarshaling of tool arguments.
+
+// CategoryArgs holds the category parameter for rule filtering.
 type CategoryArgs struct {
 	Category string `json:"category"`
 }
 
+// TypeArgs holds the type parameter for rule filtering.
 type TypeArgs struct {
 	Type string `json:"type"`
 }
 
+// ContextArgs holds the context parameter for rule applicability checking.
 type ContextArgs struct {
 	Context string `json:"context"`
 }
 
+// RuleNameArgs holds the rule name parameter for template and example retrieval.
 type RuleNameArgs struct {
 	RuleName string `json:"rule_name"`
 }
 
-// mustMarshal marshals the value to JSON and panics on error
+// mustMarshal marshals the value to JSON and panics on error.
+// This is an internal helper used for response formatting where JSON
+// marshaling errors indicate a programming error rather than runtime condition.
 func mustMarshal(v interface{}) []byte {
 	data, err := json.Marshal(v)
 	if err != nil {
@@ -91,6 +118,9 @@ func mustMarshal(v interface{}) []byte {
 	return data
 }
 
+// setupTools registers all available tools with the MCP server.
+// Each tool is registered with debug logging and proper error handling.
+// Returns error if any tool registration fails.
 func (s *Service) setupTools(server *mcp.Server) error {
 	// Register get rules by category tool
 	if err := server.RegisterTool("get_rules_by_category", "Get all rules for a given category", func(args CategoryArgs) (*mcp.ToolResponse, error) {

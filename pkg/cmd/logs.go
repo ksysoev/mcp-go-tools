@@ -1,3 +1,11 @@
+// Package cmd implements the command-line interface for the MCP code tools server.
+//
+// This file provides logging configuration and initialization using slog.
+// Logging features include:
+// - JSON and text output formats
+// - Configurable log levels (debug, info, warn, error)
+// - File output support with automatic file creation
+// - Version and application tagging for all log entries
 package cmd
 
 import (
@@ -8,9 +16,13 @@ import (
 )
 
 // initLogger initializes the default logger for the application using slog.
-// It supports writing logs to both stdout and an optional log file.
-// The log format can be either JSON (default) or text based on the TextFormat flag.
-// Returns an error if logger initialization fails, including file access errors.
+// It configures the logger based on command-line arguments:
+//   - LogLevel: Sets the minimum log level (debug, info, warn, error)
+//   - TextFormat: Uses human-readable format instead of JSON
+//   - LogFile: Writes logs to specified file instead of stdout
+//
+// The logger adds version and application tags to all log entries.
+// Returns error if log level is invalid or file access fails.
 func initLogger(arg *args) error {
 	var logLevel slog.Level
 	if err := logLevel.UnmarshalText([]byte(arg.LogLevel)); err != nil {

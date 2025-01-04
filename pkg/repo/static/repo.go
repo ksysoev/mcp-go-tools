@@ -1,3 +1,8 @@
+// Package static provides a static file-based implementation of the code generation rule repository.
+//
+// It implements the core.ResourceRepo interface by managing rules through configuration
+// files. The package handles rule storage, retrieval, and conversion between internal
+// and core domain types.
 package static
 
 import (
@@ -7,10 +12,13 @@ import (
 	"github.com/ksysoev/mcp-code-tools/pkg/core"
 )
 
-// Config represents the main configuration structure for code generation guidelines
+// Config represents the main configuration structure for code generation guidelines.
+// It is a slice of Rule that can be loaded from configuration files.
 type Config = []Rule
 
-// Rule defines a universal structure for all types of code generation rules
+// Rule defines a universal structure for all types of code generation rules.
+// It mirrors core.Rule but uses mapstructure tags for configuration file parsing.
+// Each rule contains metadata, pattern definition, examples, and applicability criteria.
 type Rule struct {
 	Name        string      `mapstructure:"name"`
 	Category    string      `mapstructure:"category"`
@@ -23,33 +31,43 @@ type Rule struct {
 	IsRequired  bool        `mapstructure:"required"`
 }
 
-// RulePattern defines how the rule should be implemented
+// RulePattern defines how the rule should be implemented.
+// It contains the template to be used for code generation, variable replacements,
+// and the format specification for the generated code.
 type RulePattern struct {
 	Template     string            `mapstructure:"template"`
 	Replacements map[string]string `mapstructure:"replacements"`
 	Format       string            `mapstructure:"format"`
 }
 
-// Example provides a usage example for a rule
+// Example provides a usage example for a rule.
+// It includes a description of what the example demonstrates,
+// the actual code snippet, and the context in which it applies.
 type Example struct {
 	Description string `mapstructure:"description"`
 	Code        string `mapstructure:"code"`
 	Context     string `mapstructure:"context"`
 }
 
-// Repository provides functionality to work with static resources and code rules
+// Repository provides functionality to work with static resources and code rules.
+// It implements core.ResourceRepo interface and is safe for concurrent use
+// as it operates on immutable configuration data.
 type Repository struct {
 	config *Config
 }
 
-// New creates a new instance of the Repository
+// New creates a new instance of the Repository.
+// The provided configuration must be properly initialized and will be used
+// as the source of all rule data.
 func New(cfg *Config) *Repository {
 	return &Repository{
 		config: cfg,
 	}
 }
 
-// convertRule converts internal Rule to core.Rule
+// convertRule converts internal Rule to core.Rule.
+// This is an internal helper method that maps between the configuration
+// and domain representations of a rule.
 func (r *Repository) convertRule(rule Rule) core.Rule {
 	return core.Rule{
 		Name:        rule.Name,
@@ -68,7 +86,9 @@ func (r *Repository) convertRule(rule Rule) core.Rule {
 	}
 }
 
-// convertExamples converts internal Examples to core.Examples
+// convertExamples converts internal Examples to core.Examples.
+// This is an internal helper method that maps between the configuration
+// and domain representations of examples.
 func convertExamples(examples []Example) []core.Example {
 	result := make([]core.Example, len(examples))
 	for i, e := range examples {
@@ -81,7 +101,9 @@ func convertExamples(examples []Example) []core.Example {
 	return result
 }
 
-// GetRulesByCategory returns all rules for a given category
+// GetRulesByCategory returns all rules for a given category.
+// It filters the configuration rules by category and converts them to core.Rule format.
+// Returns error if the context is cancelled.
 func (r *Repository) GetRulesByCategory(ctx context.Context, category string) ([]core.Rule, error) {
 	select {
 	case <-ctx.Done():
@@ -97,7 +119,9 @@ func (r *Repository) GetRulesByCategory(ctx context.Context, category string) ([
 	}
 }
 
-// GetRulesByType returns all rules of a given type
+// GetRulesByType returns all rules of a given type.
+// It filters the configuration rules by type and converts them to core.Rule format.
+// Returns error if the context is cancelled.
 func (r *Repository) GetRulesByType(ctx context.Context, ruleType string) ([]core.Rule, error) {
 	select {
 	case <-ctx.Done():
@@ -113,7 +137,9 @@ func (r *Repository) GetRulesByType(ctx context.Context, ruleType string) ([]cor
 	}
 }
 
-// GetApplicableRules returns all rules that apply to a given context
+// GetApplicableRules returns all rules that apply to a given context.
+// It filters the configuration rules by their AppliesTo field and converts matches to core.Rule format.
+// Returns error if the context is cancelled.
 func (r *Repository) GetApplicableRules(ctx context.Context, context string) ([]core.Rule, error) {
 	select {
 	case <-ctx.Done():
@@ -132,7 +158,9 @@ func (r *Repository) GetApplicableRules(ctx context.Context, context string) ([]
 	}
 }
 
-// GetTemplate returns the template for a given rule name
+// GetTemplate returns the template for a given rule name.
+// It searches for a rule by name and returns its pattern template.
+// Returns error if the rule is not found or the context is cancelled.
 func (r *Repository) GetTemplate(ctx context.Context, ruleName string) (string, error) {
 	select {
 	case <-ctx.Done():
@@ -147,7 +175,9 @@ func (r *Repository) GetTemplate(ctx context.Context, ruleName string) (string, 
 	}
 }
 
-// GetExamples returns examples for a given rule name
+// GetExamples returns examples for a given rule name.
+// It searches for a rule by name and returns its converted examples.
+// Returns error if the rule is not found or the context is cancelled.
 func (r *Repository) GetExamples(ctx context.Context, ruleName string) ([]core.Example, error) {
 	select {
 	case <-ctx.Done():
