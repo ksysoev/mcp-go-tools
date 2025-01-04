@@ -7,109 +7,102 @@ import (
 	"github.com/ksysoev/mcp-code-tools/pkg/core"
 )
 
-func TestGetRulesByCategory(t *testing.T) {
+func TestGetCodeStyle(t *testing.T) {
 	config := Config{
 		{
 			Name:     "test_rule1",
 			Category: "testing",
+			Pattern: RulePattern{
+				Format: "go",
+			},
 		},
 		{
 			Name:     "test_rule2",
 			Category: "testing",
+			Pattern: RulePattern{
+				Format: "go",
+			},
 		},
 		{
 			Name:     "style_rule",
 			Category: "style",
-		},
-	}
-	cfg := &config
-
-	svc := New(cfg)
-	ctx := context.Background()
-
-	var coreRules []core.Rule
-	coreRules, err := svc.GetRulesByCategory(ctx, "testing")
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
-	if len(coreRules) != 2 {
-		t.Errorf("Expected 2 testing rules, got %d", len(coreRules))
-	}
-
-	for _, rule := range coreRules {
-		if rule.Category != "testing" {
-			t.Errorf("Expected testing category, got %s", rule.Category)
-		}
-	}
-}
-
-func TestGetTemplate(t *testing.T) {
-	expectedTemplate := "func New{{.TypeName}}() *{{.TypeName}} {}"
-	config := Config{
-		{
-			Name: "constructor",
 			Pattern: RulePattern{
-				Template: expectedTemplate,
+				Format: "go",
 			},
 		},
-	}
-	cfg := &config
-
-	svc := New(cfg)
-
-	ctx := context.Background()
-	var template string
-	var err error
-	template, err = svc.GetTemplate(ctx, "constructor")
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-
-	if template != expectedTemplate {
-		t.Errorf("Expected template %q, got %q", expectedTemplate, template)
-	}
-
-	_, err = svc.GetTemplate(ctx, "nonexistent")
-	if err == nil {
-		t.Error("Expected error for nonexistent template, got nil")
-	}
-}
-
-func TestGetExamples(t *testing.T) {
-	config := Config{
 		{
-			Name: "test_rule",
-			Examples: []Example{
-				{
-					Description: "Example 1",
-					Code:        "example code",
-				},
+			Name:     "python_rule",
+			Category: "testing",
+			Pattern: RulePattern{
+				Format: "python",
 			},
 		},
 	}
 	cfg := &config
 
 	svc := New(cfg)
-
 	ctx := context.Background()
-	var coreExamples []core.Example
-	var err error
-	coreExamples, err = svc.GetExamples(ctx, "test_rule")
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+
+	tests := []struct {
+		name       string
+		categories []string
+		language   string
+		want       int
+	}{
+		{
+			name:       "single category go rules",
+			categories: []string{"testing"},
+			language:   "go",
+			want:       2,
+		},
+		{
+			name:       "multiple categories go rules",
+			categories: []string{"testing", "style"},
+			language:   "go",
+			want:       3,
+		},
+		{
+			name:       "python rules",
+			categories: []string{"testing"},
+			language:   "python",
+			want:       1,
+		},
+		{
+			name:       "no matching rules",
+			categories: []string{"nonexistent"},
+			language:   "go",
+			want:       0,
+		},
 	}
 
-	if len(coreExamples) != 1 {
-		t.Errorf("Expected 1 example, got %d", len(coreExamples))
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var rules []core.Rule
+			rules, err := svc.GetCodeStyle(ctx, tt.categories, tt.language)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
 
-	if coreExamples[0].Description != "Example 1" {
-		t.Errorf("Expected description 'Example 1', got %q", coreExamples[0].Description)
-	}
+			if len(rules) != tt.want {
+				t.Errorf("Expected %d rules, got %d", tt.want, len(rules))
+			}
 
-	_, err = svc.GetExamples(ctx, "nonexistent")
-	if err == nil {
-		t.Error("Expected error for nonexistent template, got nil")
+			for _, rule := range rules {
+				if rule.Pattern.Format != tt.language {
+					t.Errorf("Expected language %s, got %s", tt.language, rule.Pattern.Format)
+				}
+
+				found := false
+				for _, cat := range tt.categories {
+					if rule.Category == cat {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("Rule category %s not in expected categories %v", rule.Category, tt.categories)
+				}
+			}
+		})
 	}
 }

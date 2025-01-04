@@ -10,23 +10,10 @@ import (
 )
 
 // ResourceRepo defines the interface for managing code generation rules and resources.
-// It provides methods to retrieve rules by category, type, and context, as well as
-// accessing templates and examples for specific rules.
+// It provides methods to retrieve rules by categories and language.
 type ResourceRepo interface {
-	// GetRulesByCategory returns all rules for a given category
-	GetRulesByCategory(ctx context.Context, category string) ([]Rule, error)
-
-	// GetRulesByType returns all rules of a given type
-	GetRulesByType(ctx context.Context, ruleType string) ([]Rule, error)
-
-	// GetApplicableRules returns all rules that apply to a given context
-	GetApplicableRules(ctx context.Context, context string) ([]Rule, error)
-
-	// GetTemplate returns the template for a given rule name
-	GetTemplate(ctx context.Context, ruleName string) (string, error)
-
-	// GetExamples returns examples for a given rule name
-	GetExamples(ctx context.Context, ruleName string) ([]Example, error)
+	// GetCodeStyle returns all rules that match the specified categories and language
+	GetCodeStyle(ctx context.Context, categories []string, language string) ([]Rule, error)
 }
 
 // Rule defines a universal structure for all types of code generation rules.
@@ -76,37 +63,9 @@ func New(resource ResourceRepo) *Service {
 	}
 }
 
-// GetRulesByCategory retrieves all rules that belong to the specified category.
+// GetCodeStyle retrieves rules that match the specified categories and language.
 // It returns a slice of rules and any error encountered during the retrieval.
 // Returns error if the repository access fails.
-func (s *Service) GetRulesByCategory(ctx context.Context, category string) ([]Rule, error) {
-	return s.resource.GetRulesByCategory(ctx, category)
-}
-
-// GetRulesByType retrieves all rules of the specified type.
-// It returns a slice of rules and any error encountered during the retrieval.
-// Returns error if the repository access fails.
-func (s *Service) GetRulesByType(ctx context.Context, ruleType string) ([]Rule, error) {
-	return s.resource.GetRulesByType(ctx, ruleType)
-}
-
-// GetApplicableRules retrieves all rules that are applicable to the specified context.
-// It returns a slice of rules that can be applied in the given context.
-// Returns error if the repository access fails.
-func (s *Service) GetApplicableRules(ctx context.Context, context string) ([]Rule, error) {
-	return s.resource.GetApplicableRules(ctx, context)
-}
-
-// GetTemplate retrieves the template associated with the specified rule name.
-// It returns the template string that can be used for code generation.
-// Returns error if the rule is not found or repository access fails.
-func (s *Service) GetTemplate(ctx context.Context, ruleName string) (string, error) {
-	return s.resource.GetTemplate(ctx, ruleName)
-}
-
-// GetExamples retrieves all examples associated with the specified rule name.
-// It returns a slice of examples that demonstrate the rule's usage.
-// Returns error if the rule is not found or repository access fails.
-func (s *Service) GetExamples(ctx context.Context, ruleName string) ([]Example, error) {
-	return s.resource.GetExamples(ctx, ruleName)
+func (s *Service) GetCodeStyle(ctx context.Context, categories []string, language string) ([]Rule, error) {
+	return s.resource.GetCodeStyle(ctx, categories, language)
 }

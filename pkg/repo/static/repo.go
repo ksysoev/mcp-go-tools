@@ -7,7 +7,6 @@ package static
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ksysoev/mcp-code-tools/pkg/core"
 )
@@ -79,10 +78,9 @@ func (r *Repository) convertRule(rule Rule) core.Rule {
 			Replacements: rule.Pattern.Replacements,
 			Format:       rule.Pattern.Format,
 		},
-		Examples:   convertExamples(rule.Examples),
-		AppliesTo:  rule.AppliesTo,
-		Priority:   rule.Priority,
-		IsRequired: rule.IsRequired,
+		Examples:  convertExamples(rule.Examples),
+		AppliesTo: rule.AppliesTo,
+		Priority:  rule.Priority,
 	}
 }
 
@@ -95,99 +93,38 @@ func convertExamples(examples []Example) []core.Example {
 		result[i] = core.Example{
 			Description: e.Description,
 			Code:        e.Code,
-			Context:     e.Context,
 		}
 	}
 	return result
 }
 
-// GetRulesByCategory returns all rules for a given category.
-// It filters the configuration rules by category and converts them to core.Rule format.
+// GetCodeStyle returns all rules that match the specified categories and language.
+// It filters the configuration rules by categories and language, converting matches to core.Rule format.
 // Returns error if the context is cancelled.
-func (r *Repository) GetRulesByCategory(ctx context.Context, category string) ([]core.Rule, error) {
+func (r *Repository) GetCodeStyle(ctx context.Context, categories []string, language string) ([]core.Rule, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
 		var rules []core.Rule
+
+		// Create a map for faster category lookup
+		categoryMap := make(map[string]bool)
+		for _, cat := range categories {
+			categoryMap[cat] = true
+		}
+
 		for _, rule := range *r.config {
-			if rule.Category == category {
+			// Check if rule matches requested language
+			if rule.Pattern.Format != language {
+				continue
+			}
+
+			// Check if rule category matches any requested category
+			if categoryMap[rule.Category] {
 				rules = append(rules, r.convertRule(rule))
 			}
 		}
 		return rules, nil
-	}
-}
-
-// GetRulesByType returns all rules of a given type.
-// It filters the configuration rules by type and converts them to core.Rule format.
-// Returns error if the context is cancelled.
-func (r *Repository) GetRulesByType(ctx context.Context, ruleType string) ([]core.Rule, error) {
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-		var rules []core.Rule
-		for _, rule := range *r.config {
-			if rule.Type == ruleType {
-				rules = append(rules, r.convertRule(rule))
-			}
-		}
-		return rules, nil
-	}
-}
-
-// GetApplicableRules returns all rules that apply to a given context.
-// It filters the configuration rules by their AppliesTo field and converts matches to core.Rule format.
-// Returns error if the context is cancelled.
-func (r *Repository) GetApplicableRules(ctx context.Context, context string) ([]core.Rule, error) {
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-		var rules []core.Rule
-		for _, rule := range *r.config {
-			for _, applies := range rule.AppliesTo {
-				if applies == context {
-					rules = append(rules, r.convertRule(rule))
-					break
-				}
-			}
-		}
-		return rules, nil
-	}
-}
-
-// GetTemplate returns the template for a given rule name.
-// It searches for a rule by name and returns its pattern template.
-// Returns error if the rule is not found or the context is cancelled.
-func (r *Repository) GetTemplate(ctx context.Context, ruleName string) (string, error) {
-	select {
-	case <-ctx.Done():
-		return "", ctx.Err()
-	default:
-		for _, rule := range *r.config {
-			if rule.Name == ruleName {
-				return rule.Pattern.Template, nil
-			}
-		}
-		return "", fmt.Errorf("template not found for rule: %s", ruleName)
-	}
-}
-
-// GetExamples returns examples for a given rule name.
-// It searches for a rule by name and returns its converted examples.
-// Returns error if the rule is not found or the context is cancelled.
-func (r *Repository) GetExamples(ctx context.Context, ruleName string) ([]core.Example, error) {
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-		for _, rule := range *r.config {
-			if rule.Name == ruleName {
-				return convertExamples(rule.Examples), nil
-			}
-		}
-		return nil, fmt.Errorf("examples not found for rule: %s", ruleName)
 	}
 }
