@@ -198,16 +198,126 @@
   priority: 1
   required: true
 
-# Example of a documentation rule
-- name: "doc_standard"
+# Function documentation pattern
+- name: "func_doc_standard"
   category: "documentation"
-  type: "pattern"
-  description: "Standard documentation format for Go code"
+  type: "template"
+  description: "Standard documentation format for Go functions"
   pattern:
     template: |
-      // {{.Name}} {{.Action}}
-      // {{.Description}}
+      // {{.Name}} {{.Action}} {{.Description}}.
+      // It {{.BehaviorDetails}}.
+      {{if .HasParams}}// {{.ParamDocs}}{{end}}
+      {{if .HasReturns}}// Returns {{.ReturnDocs}}{{end}}
+      {{if .HasErrors}}// Returns error if {{.ErrorConditions}}{{end}}
     format: "go"
-  applies_to: ["function", "type", "package"]
+  applies_to: ["function", "method"]
   priority: 1
   required: true
+  examples:
+    - description: "Simple function documentation"
+      code: |
+        // Sum adds two integers and returns their sum.
+        func Sum(a, b int) int
+    - description: "Complex function documentation"
+      code: |
+        // ProcessData validates and transforms the input data according to the specified options.
+        // It applies each transformation sequentially and stops on the first error encountered.
+        // Data is the raw input to be processed
+        // Options control the transformation behavior
+        // Returns processed data in the requested format
+        // Returns error if validation fails or any transformation step errors
+        func ProcessData(data []byte, opts *Options) ([]byte, error)
+
+# Package documentation pattern
+- name: "package_doc_standard"
+  category: "documentation"
+  type: "template"
+  description: "Standard documentation format for Go packages"
+  pattern:
+    template: |
+      // Package {{.Name}} {{.Description}}.
+      {{if .HasDetails}}//
+      // {{.Details}}{{end}}
+    format: "go"
+  applies_to: ["package"]
+  priority: 1
+  required: true
+  examples:
+    - description: "Package documentation"
+      code: |
+        // Package calculator provides basic arithmetic operations
+        // and advanced mathematical calculations.
+        package calculator
+
+# Interface documentation pattern
+- name: "interface_doc_standard"
+  category: "documentation"
+  type: "template"
+  description: "Standard documentation format for Go interfaces"
+  pattern:
+    template: |
+      // {{.Name}} {{.Description}}.
+      {{if .HasDetails}}//
+      // {{.Details}}{{end}}
+      {{range .Methods}}// {{.Name}} {{.Description}}.
+      // {{.BehaviorDetails}}{{end}}
+    format: "go"
+  applies_to: ["interface"]
+  priority: 1
+  required: true
+  examples:
+    - description: "Interface documentation"
+      code: |
+        // Reader is the interface that wraps the basic Read method.
+        //
+        // Read reads up to len(p) bytes into p. It returns the number of bytes
+        // read (0 <= n <= len(p)) and any error encountered.
+        type Reader interface {
+            Read(p []byte) (n int, err error)
+        }
+
+# Constant and variable documentation pattern
+- name: "const_var_doc_standard"
+  category: "documentation"
+  type: "template"
+  description: "Standard documentation format for Go constants and variables"
+  pattern:
+    template: |
+      // {{.Name}} {{.Description}}
+      {{if .HasDetails}}// {{.Details}}{{end}}
+    format: "go"
+  applies_to: ["const", "var"]
+  priority: 1
+  required: true
+  examples:
+    - description: "Constant documentation"
+      code: |
+        // MaxRetries is the maximum number of retry attempts for network operations
+        const MaxRetries = 3
+    - description: "Variable documentation"
+      code: |
+        // DefaultTimeout is the default duration before operations timeout
+        var DefaultTimeout = 30 * time.Second
+
+# Concurrency documentation pattern
+- name: "concurrency_doc_standard"
+  category: "documentation"
+  type: "template"
+  description: "Documentation pattern for concurrent operations"
+  pattern:
+    template: |
+      // {{.Name}} {{.Description}}.
+      // This {{if .IsConcurrentSafe}}is{{else}}is not{{end}} safe for concurrent use.
+      {{if .HasSyncRequirements}}// Synchronization requirements: {{.SyncRequirements}}{{end}}
+    format: "go"
+  applies_to: ["function", "method", "type"]
+  priority: 1
+  required: true
+  examples:
+    - description: "Concurrent safe function"
+      code: |
+        // ProcessQueue handles incoming requests from the queue.
+        // This is safe for concurrent use.
+        // Synchronization requirements: Caller must ensure queue is initialized.
+        func ProcessQueue(ctx context.Context, queue *Queue)
