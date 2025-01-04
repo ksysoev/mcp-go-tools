@@ -24,28 +24,153 @@
             }
         }
 
-# Example of a testing rule
-- name: "test_pattern"
+# Basic test pattern with testify
+- name: "basic_test_pattern"
   category: "testing"
   type: "template"
-  description: "Standard test pattern with table-driven tests"
+  description: "Standard test pattern using testify assertions"
   pattern:
     template: |
       func Test{{.Name}}(t *testing.T) {
-          tests := []struct{
-              name string
-              {{.TestFields}}
+          // Arrange
+          assert := assert.New(t)
+          require := require.New(t)
+          
+          // Act
+          {{.TestLogic}}
+          
+          // Assert
+          require.NoError(err)
+          assert.Equal(expected, result)
+      }
+    format: "go"
+  applies_to: ["function", "method"]
+  priority: 1
+  required: true
+  examples:
+    - description: "Basic test with testify"
+      code: |
+        func TestCreateUser(t *testing.T) {
+            // Arrange
+            assert := assert.New(t)
+            require := require.New(t)
+            
+            // Act
+            user, err := CreateUser("John", 25)
+            
+            // Assert
+            require.NoError(err)
+            assert.Equal("John", user.Name)
+            assert.Equal(25, user.Age)
+        }
+
+# Table-driven test pattern
+- name: "table_test_pattern"
+  category: "testing"
+  type: "template"
+  description: "Table-driven test pattern for multiple test cases"
+  pattern:
+    template: |
+      func Test{{.Name}}(t *testing.T) {
+          tests := []struct {
+              name    string
+              {{.InputFields}}
+              want    {{.OutputType}}
+              wantErr error
           }{
-              {{.TestCases}}
+              {
+                  name: "{{.TestCaseName}}",
+                  {{.TestCaseFields}}
+              },
           }
+          
           for _, tt := range tests {
               t.Run(tt.name, func(t *testing.T) {
-                  {{.TestLogic}}
+                  got, err := {{.FunctionName}}({{.InputParams}})
+                  if tt.wantErr != nil {
+                      assert.ErrorIs(t, err, tt.wantErr)
+                      return
+                  }
+                  assert.NoError(t, err)
+                  assert.Equal(t, tt.want, got)
               })
           }
       }
     format: "go"
   applies_to: ["function", "method"]
+  priority: 1
+  required: true
+
+# Mock usage pattern
+- name: "mock_pattern"
+  category: "testing"
+  type: "template"
+  description: "Standard pattern for using mocks with mockery"
+  pattern:
+    template: |
+      func Test{{.Name}}WithMock(t *testing.T) {
+          // Arrange
+          mock := mocks.New{{.Interface}}(t)
+          mock.On("{{.Method}}", mock.Anything, {{.Params}}).
+              Return({{.ReturnValues}})
+          
+          sut := New{{.Type}}(mock)
+          
+          // Act
+          {{.TestLogic}}
+          
+          // Assert
+          mock.AssertExpectations(t)
+      }
+    format: "go"
+  applies_to: ["interface"]
+  priority: 1
+  required: true
+  examples:
+    - description: "Mock usage example"
+      code: |
+        func TestUserServiceWithMock(t *testing.T) {
+            // Arrange
+            mockRepo := mocks.NewUserRepository(t)
+            mockRepo.On("Get", mock.Anything, "123").
+                Return(&User{ID: "123", Name: "John"}, nil)
+            
+            service := NewUserService(mockRepo)
+            
+            // Act
+            user, err := service.GetUser(context.Background(), "123")
+            
+            // Assert
+            assert.NoError(t, err)
+            assert.Equal(t, "John", user.Name)
+            mockRepo.AssertExpectations(t)
+        }
+
+# Test organization pattern
+- name: "test_suite_pattern"
+  category: "testing"
+  type: "template"
+  description: "Pattern for organizing related tests using testify suite"
+  pattern:
+    template: |
+      type {{.Name}}Suite struct {
+          suite.Suite
+          {{.Fields}}
+      }
+      
+      func (s *{{.Name}}Suite) SetupTest() {
+          {{.SetupLogic}}
+      }
+      
+      func (s *{{.Name}}Suite) Test{{.TestName}}() {
+          {{.TestLogic}}
+      }
+      
+      func Test{{.Name}}(t *testing.T) {
+          suite.Run(t, new({{.Name}}Suite))
+      }
+    format: "go"
+  applies_to: ["struct"]
   priority: 1
   required: true
 
