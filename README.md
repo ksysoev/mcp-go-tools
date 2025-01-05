@@ -133,9 +133,7 @@ The tool supports configuration via a JSON/YAML file. Specify the config file pa
 The project is in active development with the following components:
 - ✅ CLI framework and command structure
 - ✅ Configuration management
-- ✅ Enhanced logging system
 - ✅ MCP protocol integration
-- ✅ Go code pattern recognition
 - ✅ Idiomatic Go code generation
 - ✅ Go project templates
 - 🚧 Add integration with mockery
