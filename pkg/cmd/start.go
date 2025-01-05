@@ -18,7 +18,6 @@ import (
 // The function runs until the context is cancelled or an error occurs.
 // Returns error if any component initialization fails or the server encounters an error.
 func runStart(ctx context.Context, cfg *Config) error {
-
 	staticRepo := static.New(&cfg.Rules)
 
 	toolHandler := core.New(staticRepo)

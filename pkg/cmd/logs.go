@@ -37,7 +37,7 @@ func initLogger(arg *args) error {
 	var writer io.Writer = os.Stdout
 	if arg.LogFile != "" {
 		var err error
-		writer, err = os.OpenFile(arg.LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		writer, err = os.OpenFile(arg.LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
 		if err != nil {
 			return fmt.Errorf("failed to open log file: %w", err)
 		}
