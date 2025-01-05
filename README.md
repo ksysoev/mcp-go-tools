@@ -166,9 +166,7 @@ go test ./...
 
 ## Using with Cline
 
-To use this MCP server with Cline, add it to Cline's MCP settings file located at:
-- VSCode: `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
-- Claude Desktop App: `~/Library/Application Support/Claude/claude_desktop_config.json`
+To use this MCP server with Cline, add it to Cline's MCP settings
 
 Add the following configuration to the `mcpServers` object in the settings file:
 
@@ -176,13 +174,23 @@ Add the following configuration to the `mcpServers` object in the settings file:
 {
   "mcpServers": {
     "code-tools": {
-      "command": "mcp",
-      "args": ["start"],
+      "command": "mcp-code-tools",
+      "args": ["server", "--config=/Users/user/mcp-code-tools/example.config.yaml",  "--log-level=WARN"],
       "env": {}
     }
   }
 }
+
 ```
+
+Custom instructions example:
+
+```
+Use project template to initialize new applications for GoLang, it's available in MCP server code-tools `codestyle ` with category `template`
+
+Every time you you need to generate code use MCP server code-tools `codestyle ` with required category `code`, `documentation`, `testing`
+```
+
 
 After adding the configuration, Cline will have access to the following tool:
 

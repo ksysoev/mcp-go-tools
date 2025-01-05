@@ -19,7 +19,7 @@ import (
 // It configures the logger based on command-line arguments:
 //   - LogLevel: Sets the minimum log level (debug, info, warn, error)
 //   - TextFormat: Uses human-readable format instead of JSON
-//   - LogFile: Writes logs to specified file instead of stdout
+//   - LogFile: Writes logs to specified file
 //
 // The logger adds version and application tags to all log entries.
 // Returns error if log level is invalid or file access fails.
@@ -34,7 +34,7 @@ func initLogger(arg *args) error {
 	}
 
 	// Set up writer based on logfile flag
-	var writer io.Writer = os.Stdout
+	var writer io.Writer = io.Discard
 	if arg.LogFile != "" {
 		var err error
 		writer, err = os.OpenFile(arg.LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
