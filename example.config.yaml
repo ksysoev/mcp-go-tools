@@ -18,13 +18,23 @@ rules:
               if serverAddr == "" {
                   return nil, errors.New("server address is required")
               }
-              if timeout <= 0 {
-                  return nil, errors.New("timeout must be positive")
-              }
               return &Config{
                   serverAddr: serverAddr,
                   timeout:    timeout,
               }, nil
+          }
+      - description: "Constructor with optional parameters"
+        code: |
+          type Option func(*Options)
+
+          func NewService(opts ...Option) *Service {
+              s := &Service{
+                  timeout: 30 * time.Second,
+              }
+              for _, opt := range opts {
+                  opt(s)
+              }
+              return s
           }
 
   # Interface naming pattern
@@ -32,7 +42,7 @@ rules:
     category: "code"
     description: "Go interface naming conventions"
     examples:
-      - description: "Single method interface"
+      - description: "Single method interface, named after the method name"
         code: |
           type Reader interface {
               Read(p []byte) (n int, err error)
@@ -46,30 +56,6 @@ rules:
               Delete(ctx context.Context, id string) error
           }
 
-  # Package organization
-  - name: "package_organization"
-    category: "code"
-    description: "Go package organization patterns"
-    examples:
-      - description: "Domain-driven package structure"
-        code: |
-          project/
-          ├── cmd/                    # Main applications
-          │   └── app/               # Application-specific code
-          │       └── main.go        # Application entry point
-          ├── pkg/                   # Project packages
-          │   ├── api/              # API handlers
-          │   ├── core/             # Core business logic
-          │   ├── service/          # Business operations
-          │   ├── repo/             # Data access
-          │   └── types/            # Shared types
-      - description: "Package naming"
-        code: |
-          package user       // Good: single word
-          package imageutil  // Good: no underscore for utility
-          package api       // Good: short and clear
-          package database  // Good: describes functionality
-
   # Error handling
   - name: "error_handling"
     category: "code"
@@ -82,21 +68,32 @@ rules:
               ID      string
           }
 
-          func (e *NotFoundError) Error() string {
-              return fmt.Sprintf("%s not found: %s", e.Resource, e.ID)
-          }
-
-          // Usage
-          if err := repo.Get(id); err != nil {
+          func NewNotFoundError(resource, id string) *NotFoundError {
               return &NotFoundError{
-                  Resource: "user",
+                  Resource: resource,
                   ID:      id,
               }
           }
+
+          func (e *NotFoundError) Error() string {
+              return fmt.Sprintf("%s not found: %s", e.Resource, e.ID)
+          }
       - description: "Error wrapping"
         code: |
-          if err := validate(data); err != nil {
-              return fmt.Errorf("validate data: %w", err)
+          func process(data []byte) error {
+              if err := validate(data); err != nil {
+                  return fmt.Errorf("validate data: %w", err)
+              }
+              return nil
+          }
+      - description: "Error logging, we should not log error if we are returning it"
+        code: |
+          func process(data []byte) error {
+              if err := validate(data); err != nil {
+                  slog.Error("failed to validate data", slog.Any("error", err))
+                  return nil
+              }
+              return nil
           }
 
   # Function documentation
@@ -175,32 +172,30 @@ rules:
               for _, tt := range tests {
                   t.Run(tt.name, func(t *testing.T) {
                       err := Validate(tt.input)
-                      if (err != nil) != tt.wantErr {
-                          t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+                      if tt.wantErr {
+                          assert.Error(t, err)
+                      } else {
+                          assert.NoError(t, err)
                       }
                   })
               }
           }
-
-  # Test setup/teardown
-  - name: "test_setup"
+  - name: "mocking"
     category: "testing"
-    description: "Test setup and teardown patterns"
+    description: "For mocking we should use mockery tool, which will generate mock for the interface"
     examples:
-      - description: "Setup and teardown"
+      - description: "Basic mock"
         code: |
-          func TestService(t *testing.T) {
-              // Setup
-              s := NewService()
-              defer s.Close() // Teardown
+          TestUserService_Create(t *testing.T) {
+              ctx := context.Background()
+              expected := &User{}
 
-              t.Run("Create", func(t *testing.T) {
-                  // Test create operation
-              })
+              mockRepo := NewMockUserRepository(t)
+              mockRepo.EXPECT().Create(ctx, expected).Return(nil)
 
-              t.Run("Update", func(t *testing.T) {
-                  // Test update operation
-              })
+              service := NewUserService(mockRepo)
+              err := service.Create(context.Background(), &User{})
+              assert.NoError(t, err)
           }
 
   # Application template
