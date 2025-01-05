@@ -192,15 +192,8 @@ Retrieves Go-specific coding style guidelines and best practices for generating 
 
 Parameters:
 - `category`: Comma-separated list of rule categories to filter by
-  * "naming" - Go naming conventions (packages, variables, interfaces)
-  * "formatting" - Go code formatting rules
-  * "organization" - Go project structure guidelines
-  * "patterns" - common Go design patterns
-  * "documentation" - Go documentation conventions
-  * "interfaces" - Go interface design principles
-  * "packages" - Go package organization rules
-  * "errors" - Go error handling conventions
-  * "concurrency" - Go concurrent programming patterns
+  * "code" - Go code patterns, structures, and best practices
+  * "documentation" - Go documentation conventions and standards
   * "testing" - Go testing patterns and practices
 
 Returns:
@@ -210,13 +203,17 @@ Returns:
 
 Example usage in Cline:
 ```
-You: Show me Go interface naming rules
+You: Show me Go interface patterns
 Cline: Let me get those rules for you...
-[Uses codestyle tool with categories="naming,interfaces"]
+[Uses codestyle tool with categories="code"]
 
-You: What's the proper way to handle errors in Go?
-Cline: I'll check the Go error handling conventions...
-[Uses codestyle tool with categories="errors"]
+You: How should I document my Go package?
+Cline: I'll check the documentation guidelines...
+[Uses codestyle tool with categories="documentation"]
+
+You: What's the best way to write table-driven tests?
+Cline: I'll show you the testing patterns...
+[Uses codestyle tool with categories="testing"]
 ```
 
 The tool returns rules in an LLM-optimized format that includes:

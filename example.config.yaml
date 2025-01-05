@@ -1,9 +1,8 @@
 rules:
   # Constructor pattern
   - name: "constructor_pattern"
-    category: "code_pattern"
+    category: "code"
     description: "Standard constructor pattern for Go types"
-    language: "go"
     examples:
       - description: "Basic constructor"
         code: |
@@ -30,9 +29,8 @@ rules:
 
   # Interface naming pattern
   - name: "interface_naming"
-    category: "naming"
+    category: "code"
     description: "Go interface naming conventions"
-    language: "go"
     examples:
       - description: "Single method interface"
         code: |
@@ -50,9 +48,8 @@ rules:
 
   # Package organization
   - name: "package_organization"
-    category: "organization"
+    category: "code"
     description: "Go package organization patterns"
-    language: "go"
     examples:
       - description: "Domain-driven package structure"
         code: |
@@ -75,9 +72,8 @@ rules:
 
   # Error handling
   - name: "error_handling"
-    category: "errors"
+    category: "code"
     description: "Go error handling patterns"
-    language: "go"
     examples:
       - description: "Custom error types"
         code: |
@@ -103,58 +99,60 @@ rules:
               return fmt.Errorf("validate data: %w", err)
           }
 
-  # Concurrency patterns
-  - name: "concurrency_patterns"
-    category: "concurrency"
-    description: "Go concurrency patterns"
-    language: "go"
+  # Function documentation
+  - name: "func_documentation"
+    category: "documentation"
+    description: "Standard documentation format for Go functions"
     examples:
-      - description: "Worker pool"
+      - description: "Simple function documentation"
         code: |
-          func worker(id int, jobs <-chan Job, results chan<- Result) {
-              for job := range jobs {
-                  results <- process(job)
-              }
-          }
-
-          func main() {
-              jobs := make(chan Job, 100)
-              results := make(chan Result, 100)
-
-              // Start workers
-              for w := 1; w <= 3; w++ {
-                  go worker(w, jobs, results)
-              }
-
-              // Send jobs
-              for _, job := range jobs {
-                  jobs <- job
-              }
-              close(jobs)
-
-              // Collect results
-              for range jobs {
-                  <-results
-              }
-          }
-      - description: "Context cancellation"
+          // Sum adds two integers and returns their sum.
+          func Sum(a, b int) int
+      - description: "Complex function documentation"
         code: |
-          func process(ctx context.Context, data []byte) error {
-              select {
-              case <-ctx.Done():
-                  return ctx.Err()
-              default:
-                  return processData(data)
-              }
+          // ProcessData validates and transforms the input data according to the specified options.
+          // It applies each transformation sequentially and stops on the first error encountered.
+          // Data is the raw input to be processed
+          // Options control the transformation behavior
+          // Returns processed data in the requested format
+          // Returns error if validation fails or any transformation step errors
+          func ProcessData(data []byte, opts *Options) ([]byte, error)
+
+  # Package documentation
+  - name: "package_documentation"
+    category: "documentation"
+    description: "Standard documentation format for Go packages"
+    examples:
+      - description: "Package documentation"
+        code: |
+          // Package calculator provides basic arithmetic operations
+          // and advanced mathematical calculations.
+          //
+          // It implements common mathematical functions and utilities
+          // while ensuring thread-safety and proper error handling.
+          package calculator
+
+  # Interface documentation
+  - name: "interface_documentation"
+    category: "documentation"
+    description: "Standard documentation format for Go interfaces"
+    examples:
+      - description: "Interface documentation"
+        code: |
+          // Reader is the interface that wraps the basic Read method.
+          //
+          // Read reads up to len(p) bytes into p. It returns the number of bytes
+          // read (0 <= n <= len(p)) and any error encountered.
+          type Reader interface {
+              Read(p []byte) (n int, err error)
           }
 
-  # Testing patterns
-  - name: "testing_patterns"
+  # Table-driven tests
+  - name: "table_tests"
     category: "testing"
-    description: "Go testing patterns"
-    language: "go"
+    description: "Table-driven test patterns for Go"
     examples:
-      - description: "Table-driven tests"
+      - description: "Basic table test"
         code: |
           func TestValidate(t *testing.T) {
               tests := []struct {
@@ -183,7 +181,13 @@ rules:
                   })
               }
           }
-      - description: "Subtests with setup/teardown"
+
+  # Test setup/teardown
+  - name: "test_setup"
+    category: "testing"
+    description: "Test setup and teardown patterns"
+    examples:
+      - description: "Setup and teardown"
         code: |
           func TestService(t *testing.T) {
               // Setup
@@ -197,42 +201,4 @@ rules:
               t.Run("Update", func(t *testing.T) {
                   // Test update operation
               })
-          }
-
-  # Interface design
-  - name: "interface_design"
-    category: "interfaces"
-    description: "Go interface design patterns"
-    language: "go"
-    examples:
-      - description: "Small interfaces"
-        code: |
-          type Reader interface {
-              Read(p []byte) (n int, err error)
-          }
-
-          type Writer interface {
-              Write(p []byte) (n int, err error)
-          }
-
-          // Compose interfaces
-          type ReadWriter interface {
-              Reader
-              Writer
-          }
-      - description: "Interface as contract"
-        code: |
-          type Storage interface {
-              Save(ctx context.Context, key string, value []byte) error
-              Load(ctx context.Context, key string) ([]byte, error)
-              Delete(ctx context.Context, key string) error
-          }
-
-          // Implementation
-          type RedisStorage struct {
-              client *redis.Client
-          }
-
-          func (s *RedisStorage) Save(ctx context.Context, key string, value []byte) error {
-              return s.client.Set(ctx, key, value, 0).Err()
           }
