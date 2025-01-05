@@ -1,4 +1,4 @@
-# MCP Code Tools
+# MCP GO Tools
 
 A Go-focused Model Context Protocol (MCP) server that provides idiomatic Go code generation, style guidelines, and best practices. This tool helps Language Models understand and generate high-quality Go code following established patterns and conventions.
 
