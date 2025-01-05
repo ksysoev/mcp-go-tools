@@ -28,173 +28,211 @@ rules:
               }, nil
           }
 
-  # Basic test pattern
-  - name: "basic_test_pattern"
-    category: "testing"
-    description: "Standard test pattern using testify assertions"
+  # Interface naming pattern
+  - name: "interface_naming"
+    category: "naming"
+    description: "Go interface naming conventions"
     language: "go"
     examples:
-      - description: "Basic test with testify"
+      - description: "Single method interface"
         code: |
-          func TestCreateUser(t *testing.T) {
-              // Arrange
-              assert := assert.New(t)
-              require := require.New(t)
-              
-              // Act
-              user, err := CreateUser("John", 25)
-              
-              // Assert
-              require.NoError(err)
-              assert.Equal("John", user.Name)
-              assert.Equal(25, user.Age)
-          }
-      - description: "Test with setup and cleanup"
-        code: |
-          func TestProcessData(t *testing.T) {
-              // Arrange
-              assert := assert.New(t)
-              require := require.New(t)
-              
-              // Setup test data
-              data := setupTestData(t)
-              defer cleanupTestData(t)
-              
-              // Act
-              result, err := ProcessData(data)
-              
-              // Assert
-              require.NoError(err)
-              assert.NotNil(result)
-              assert.Equal(expected, result.Value)
-          }
-
-  # Table-driven test pattern
-  - name: "table_test_pattern"
-    category: "testing"
-    description: "Table-driven test pattern for multiple test cases"
-    language: "go"
-    examples:
-      - description: "Table test for validation function"
-        code: |
-          func TestValidateUser(t *testing.T) {
-              tests := []struct {
-                  name    string
-                  user    User
-                  wantErr error
-              }{
-                  {
-                      name: "valid user",
-                      user: User{Name: "John", Age: 25},
-                      wantErr: nil,
-                  },
-                  {
-                      name: "invalid age",
-                      user: User{Name: "John", Age: -1},
-                      wantErr: ErrInvalidAge,
-                  },
-              }
-              
-              for _, tt := range tests {
-                  t.Run(tt.name, func(t *testing.T) {
-                      err := ValidateUser(tt.user)
-                      if tt.wantErr != nil {
-                          assert.ErrorIs(t, err, tt.wantErr)
-                          return
-                      }
-                      assert.NoError(t, err)
-                  })
-              }
-          }
-
-  # Error handling pattern
-  - name: "error_handling"
-    category: "error"
-    description: "Standard error handling patterns"
-    language: "go"
-    examples:
-      - description: "Error wrapping"
-        code: |
-          func ProcessUser(user *User) error {
-              if user == nil {
-                  return ErrInvalidInput
-              }
-              
-              if err := validate(user); err != nil {
-                  return fmt.Errorf("validate user: %w", err)
-              }
-              
-              return nil
-          }
-      - description: "Custom error types"
-        code: |
-          type NotFoundError struct {
-              ID string
-          }
-          
-          func (e *NotFoundError) Error() string {
-              return fmt.Sprintf("user not found: %s", e.ID)
-          }
-
-  # Function documentation pattern
-  - name: "func_doc_standard"
-    category: "documentation"
-    description: "Standard documentation format for Go functions"
-    language: "go"
-    examples:
-      - description: "Simple function documentation"
-        code: |
-          // Sum adds two integers and returns their sum.
-          func Sum(a, b int) int
-      - description: "Complex function documentation"
-        code: |
-          // ProcessData validates and transforms the input data according to the specified options.
-          // It applies each transformation sequentially and stops on the first error encountered.
-          // Data is the raw input to be processed
-          // Options control the transformation behavior
-          // Returns processed data in the requested format
-          // Returns error if validation fails or any transformation step errors
-          func ProcessData(data []byte, opts *Options) ([]byte, error)
-
-  # Package documentation pattern
-  - name: "package_doc_standard"
-    category: "documentation"
-    description: "Standard documentation format for Go packages"
-    language: "go"
-    examples:
-      - description: "Package documentation"
-        code: |
-          // Package calculator provides basic arithmetic operations
-          // and advanced mathematical calculations.
-          //
-          // It implements common mathematical functions and utilities
-          // while ensuring thread-safety and proper error handling.
-          package calculator
-
-  # Interface documentation pattern
-  - name: "interface_doc_standard"
-    category: "documentation"
-    description: "Standard documentation format for Go interfaces"
-    language: "go"
-    examples:
-      - description: "Interface documentation"
-        code: |
-          // Reader is the interface that wraps the basic Read method.
-          //
-          // Read reads up to len(p) bytes into p. It returns the number of bytes
-          // read (0 <= n <= len(p)) and any error encountered.
           type Reader interface {
               Read(p []byte) (n int, err error)
           }
-      - description: "Complex interface documentation"
+      - description: "Multi-method interface"
         code: |
-          // UserRepository defines the interface for user data access operations.
-          //
-          // It provides methods for CRUD operations on user entities and ensures
-          // proper transaction handling and data consistency.
-          type UserRepository interface {
+          type UserService interface {
               Create(ctx context.Context, user *User) error
               Get(ctx context.Context, id string) (*User, error)
               Update(ctx context.Context, user *User) error
               Delete(ctx context.Context, id string) error
+          }
+
+  # Package organization
+  - name: "package_organization"
+    category: "organization"
+    description: "Go package organization patterns"
+    language: "go"
+    examples:
+      - description: "Domain-driven package structure"
+        code: |
+          project/
+          ├── cmd/                    # Main applications
+          │   └── app/               # Application-specific code
+          │       └── main.go        # Application entry point
+          ├── pkg/                   # Project packages
+          │   ├── api/              # API handlers
+          │   ├── core/             # Core business logic
+          │   ├── service/          # Business operations
+          │   ├── repo/             # Data access
+          │   └── types/            # Shared types
+      - description: "Package naming"
+        code: |
+          package user       // Good: single word
+          package imageutil  // Good: no underscore for utility
+          package api       // Good: short and clear
+          package database  // Good: describes functionality
+
+  # Error handling
+  - name: "error_handling"
+    category: "errors"
+    description: "Go error handling patterns"
+    language: "go"
+    examples:
+      - description: "Custom error types"
+        code: |
+          type NotFoundError struct {
+              Resource string
+              ID      string
+          }
+
+          func (e *NotFoundError) Error() string {
+              return fmt.Sprintf("%s not found: %s", e.Resource, e.ID)
+          }
+
+          // Usage
+          if err := repo.Get(id); err != nil {
+              return &NotFoundError{
+                  Resource: "user",
+                  ID:      id,
+              }
+          }
+      - description: "Error wrapping"
+        code: |
+          if err := validate(data); err != nil {
+              return fmt.Errorf("validate data: %w", err)
+          }
+
+  # Concurrency patterns
+  - name: "concurrency_patterns"
+    category: "concurrency"
+    description: "Go concurrency patterns"
+    language: "go"
+    examples:
+      - description: "Worker pool"
+        code: |
+          func worker(id int, jobs <-chan Job, results chan<- Result) {
+              for job := range jobs {
+                  results <- process(job)
+              }
+          }
+
+          func main() {
+              jobs := make(chan Job, 100)
+              results := make(chan Result, 100)
+
+              // Start workers
+              for w := 1; w <= 3; w++ {
+                  go worker(w, jobs, results)
+              }
+
+              // Send jobs
+              for _, job := range jobs {
+                  jobs <- job
+              }
+              close(jobs)
+
+              // Collect results
+              for range jobs {
+                  <-results
+              }
+          }
+      - description: "Context cancellation"
+        code: |
+          func process(ctx context.Context, data []byte) error {
+              select {
+              case <-ctx.Done():
+                  return ctx.Err()
+              default:
+                  return processData(data)
+              }
+          }
+
+  # Testing patterns
+  - name: "testing_patterns"
+    category: "testing"
+    description: "Go testing patterns"
+    language: "go"
+    examples:
+      - description: "Table-driven tests"
+        code: |
+          func TestValidate(t *testing.T) {
+              tests := []struct {
+                  name    string
+                  input   string
+                  wantErr bool
+              }{
+                  {
+                      name:    "valid input",
+                      input:   "test",
+                      wantErr: false,
+                  },
+                  {
+                      name:    "empty input",
+                      input:   "",
+                      wantErr: true,
+                  },
+              }
+
+              for _, tt := range tests {
+                  t.Run(tt.name, func(t *testing.T) {
+                      err := Validate(tt.input)
+                      if (err != nil) != tt.wantErr {
+                          t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+                      }
+                  })
+              }
+          }
+      - description: "Subtests with setup/teardown"
+        code: |
+          func TestService(t *testing.T) {
+              // Setup
+              s := NewService()
+              defer s.Close() // Teardown
+
+              t.Run("Create", func(t *testing.T) {
+                  // Test create operation
+              })
+
+              t.Run("Update", func(t *testing.T) {
+                  // Test update operation
+              })
+          }
+
+  # Interface design
+  - name: "interface_design"
+    category: "interfaces"
+    description: "Go interface design patterns"
+    language: "go"
+    examples:
+      - description: "Small interfaces"
+        code: |
+          type Reader interface {
+              Read(p []byte) (n int, err error)
+          }
+
+          type Writer interface {
+              Write(p []byte) (n int, err error)
+          }
+
+          // Compose interfaces
+          type ReadWriter interface {
+              Reader
+              Writer
+          }
+      - description: "Interface as contract"
+        code: |
+          type Storage interface {
+              Save(ctx context.Context, key string, value []byte) error
+              Load(ctx context.Context, key string) ([]byte, error)
+              Delete(ctx context.Context, key string) error
+          }
+
+          // Implementation
+          type RedisStorage struct {
+              client *redis.Client
+          }
+
+          func (s *RedisStorage) Save(ctx context.Context, key string, value []byte) error {
+              return s.client.Set(ctx, key, value, 0).Err()
           }

@@ -1,11 +1,11 @@
 # MCP Code Tools
 
-A command-line interface (CLI) tool for managing Model Context Protocol (MCP) servers. This tool provides a robust set of commands for initializing, configuring, and managing MCP servers with support for structured logging and flexible configuration options.
+A Go-focused Model Context Protocol (MCP) server that provides idiomatic Go code generation, style guidelines, and best practices. This tool helps Language Models understand and generate high-quality Go code following established patterns and conventions.
 
 > **Note**: This project is under active development. The following features are currently being implemented:
-> - MCP tool setup and registration
-> - Resource repository integration
-> - Core service functionality
+> - Go-specific code pattern recognition and generation
+> - Idiomatic Go code style enforcement
+> - Go project structure templates
 > 
 > The project follows clean architecture principles and is designed for extensibility.
 
@@ -15,7 +15,7 @@ The Model Context Protocol (MCP) is implemented using the `github.com/metoro-io/
 - Uses stdio transport for communication
 - Supports graceful shutdown
 - Handles concurrent operations using errgroups
-- Provides a flexible tool registration system
+- Provides Go-specific code generation tools
 
 ## Installation
 
@@ -25,6 +25,7 @@ go install github.com/ksysoev/mcp-code-tools/cmd/mcp@latest
 
 ## Features
 
+- Go-specific code generation and style guidelines
 - Command-line interface built with Cobra
 - Flexible configuration using YAML/JSON files
 - Structured logging with slog
@@ -79,22 +80,22 @@ Note: When --log-file is provided, logs will be written only to the specified fi
 
 ## Architecture
 
-The application follows a clean, layered architecture:
+The application follows a clean, layered architecture typical of Go projects:
 
 1. **API Layer** (`pkg/api`)
    - Handles MCP protocol communication via stdio transport
    - Manages server lifecycle with graceful shutdown
-   - Implements tool registration and setup
+   - Implements Go code generation tools
    - Uses errgroups for concurrent operations
 
 2. **Core Layer** (`pkg/core`)
-   - Implements tool handling logic through dependency injection
-   - Manages resource repositories
+   - Implements Go code pattern recognition
+   - Manages code style rules
    - Processes MCP requests
    - Designed for extensibility with interface-based components
 
 3. **Repository Layer** (`pkg/repo`)
-   - Manages static resources through configuration
+   - Manages Go code patterns and templates
    - Supports named resource definitions
    - Implements simple data persistence
    - Uses Viper for resource configuration mapping
@@ -114,18 +115,7 @@ The application follows a clean, layered architecture:
 
 ### Configuration File
 
-The tool supports configuration via a JSON/YAML file. Specify the config file path using the `--config` flag.
-
-Example configuration file (config.yaml):
-```yaml
-api:
-rules:
-  resources:
-    - name: "example-resource"
-      data: "resource-data"
-    - name: "another-resource"
-      data: "more-data"
-```
+The tool supports configuration via a JSON/YAML file. Specify the config file path using the `--config` flag. See example.config.yaml for Go-specific patterns and rules.
 
 ## Project Structure
 
@@ -156,20 +146,11 @@ The project is in active development with the following components:
 - ✅ CLI framework and command structure
 - ✅ Configuration management
 - ✅ Enhanced logging system
-  - File output support
-  - Structured JSON/text formats
-  - Configurable log levels
-  - Comprehensive debug logging
 - ✅ MCP protocol integration
-  - Stdio transport implementation
-  - Request handler debug logging
-  - Error tracking and reporting
-- ✅ Tool registration system
-  - Category-based rule management
-  - Template handling
-  - Example management
-- 🚧 Resource repository
-- 🚧 Core service implementation
+- ✅ Go code pattern recognition
+- ✅ Idiomatic Go code generation
+- 🚧 Go project templates
+- 🚧 Advanced code analysis
 
 ### Building from Source
 
@@ -182,10 +163,6 @@ go build -o mcp ./cmd/mcp
 ```bash
 go test ./...
 ```
-
-## Version Information
-
-The application includes version and build information that can be set at build time. This information is displayed in logs and can be useful for debugging.
 
 ## Using with Cline
 
@@ -211,23 +188,23 @@ After adding the configuration, Cline will have access to the following tool:
 
 ### codestyle
 
-Retrieves coding style guidelines and best practices for generating idiomatic code. This tool helps Language Models understand and apply consistent coding standards when writing or modifying code.
+Retrieves Go-specific coding style guidelines and best practices for generating idiomatic Go code. This tool helps Language Models understand and apply consistent coding standards when writing or modifying Go code.
 
 Parameters:
 - `category`: Comma-separated list of rule categories to filter by
-  * "naming" - conventions for naming variables, functions, types
-  * "formatting" - code formatting and style rules
-  * "organization" - code structure and layout guidelines
-  * "patterns" - common design patterns and implementations
-  * "documentation" - rules for comments and documentation
-  * "interfaces" - interface design principles (Go-specific)
-  * "packages" - package organization rules (Go-specific)
-  * "errors" - error handling conventions (Go-specific)
-  * "concurrency" - concurrent programming patterns (Go-specific)
-- `language`: Target programming language (e.g., "go", "python", "typescript")
+  * "naming" - Go naming conventions (packages, variables, interfaces)
+  * "formatting" - Go code formatting rules
+  * "organization" - Go project structure guidelines
+  * "patterns" - common Go design patterns
+  * "documentation" - Go documentation conventions
+  * "interfaces" - Go interface design principles
+  * "packages" - Go package organization rules
+  * "errors" - Go error handling conventions
+  * "concurrency" - Go concurrent programming patterns
+  * "testing" - Go testing patterns and practices
 
 Returns:
-- Language-specific formatting guidelines
+- Go-specific formatting guidelines
 - Code style rules with examples and templates
 - Priority levels and requirement status
 
@@ -235,17 +212,17 @@ Example usage in Cline:
 ```
 You: Show me Go interface naming rules
 Cline: Let me get those rules for you...
-[Uses codestyle tool with categories="naming,interfaces" and language="go"]
+[Uses codestyle tool with categories="naming,interfaces"]
 
-You: What's the proper way to organize Python imports?
-Cline: I'll check the Python organization rules...
-[Uses codestyle tool with categories="organization,imports" and language="python"]
+You: What's the proper way to handle errors in Go?
+Cline: I'll check the Go error handling conventions...
+[Uses codestyle tool with categories="errors"]
 ```
 
 The tool returns rules in an LLM-optimized format that includes:
 - Rule name and description
-- Code templates and examples
-- Language-specific formatting context
+- Go code templates and examples
+- Go-specific formatting context
 - Priority and requirement status
 
 ## License
