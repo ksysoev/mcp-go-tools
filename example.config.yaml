@@ -596,6 +596,29 @@ z
               },
             }
           }
+      - desciption: "Command runner, should contain wiring logic of application and run appliacation logic. File should be located in ./pkg/cmd/server.go"
+        code: |
+          package cmd
+
+          import (
+            "context"
+            "fmt"
+            "log/slog"
+
+            "github.com/user/example/pkg/api"
+            "github.com/user/example/pkg/repo"
+          )
+
+          // runServer starts the Example server.
+          func runServer(ctx context.Context, cfg *Config) error {
+            repo := repo.New(cfg.Database)
+            svc := core.New(repo)
+            api := api.New(cfg.Server, svc)
+
+            srv := api.NewServer(cfg.Server, api)
+
+            return srv.Run(ctx)
+          }
       - description: "Configuration initialization, we should use viper for configuration management. File should be located in ./pkg/cmd/config.go"
         code: |
           package cmd
@@ -811,6 +834,31 @@ z
           }
 
           func (r *Repo) CheckStatus() error {
+            // Check status logic
+            return nil
+          }
+  - name: "Providers package"
+    category: "template"
+    description: "Providers package should be located in ./pkg/prov directory, it should be responsible for managing external dependencies of the application"
+    examples:
+      - description: "Providers package should be responsible for managing external dependencies of the application, like external services api clients"
+        code: |
+          package prov
+
+          import (
+            "context"
+            "fmt"
+          )
+
+          type SomeClient struct {
+            addr string
+          }
+
+          func NewSomeClient(addr string) *SomeClient {
+            return &SomeClient{addr: addr}
+          }
+
+          func (c *SomeClient) CheckStatus() error {
             // Check status logic
             return nil
           }
