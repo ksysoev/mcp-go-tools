@@ -207,19 +207,46 @@ Add the following configuration to the `mcpServers` object in the settings file:
 }
 ```
 
-After adding the configuration, Cline will have access to the following tools:
-- `get_rules_by_category` - Get all rules for a given category
-- `get_rules_by_type` - Get all rules of a given type
-- `get_applicable_rules` - Get rules that apply to a given context
-- `get_template` - Get template for a given rule
-- `get_examples` - Get examples for a given rule
+After adding the configuration, Cline will have access to the following tool:
+
+### codestyle
+
+Retrieves coding style guidelines and best practices for generating idiomatic code. This tool helps Language Models understand and apply consistent coding standards when writing or modifying code.
+
+Parameters:
+- `category`: Comma-separated list of rule categories to filter by
+  * "naming" - conventions for naming variables, functions, types
+  * "formatting" - code formatting and style rules
+  * "organization" - code structure and layout guidelines
+  * "patterns" - common design patterns and implementations
+  * "documentation" - rules for comments and documentation
+  * "interfaces" - interface design principles (Go-specific)
+  * "packages" - package organization rules (Go-specific)
+  * "errors" - error handling conventions (Go-specific)
+  * "concurrency" - concurrent programming patterns (Go-specific)
+- `language`: Target programming language (e.g., "go", "python", "typescript")
+
+Returns:
+- Language-specific formatting guidelines
+- Code style rules with examples and templates
+- Priority levels and requirement status
 
 Example usage in Cline:
 ```
 You: Show me Go interface naming rules
 Cline: Let me get those rules for you...
-[Uses get_rules_by_category with "golang" and "interface_naming"]
+[Uses codestyle tool with categories="naming,interfaces" and language="go"]
+
+You: What's the proper way to organize Python imports?
+Cline: I'll check the Python organization rules...
+[Uses codestyle tool with categories="organization,imports" and language="python"]
 ```
+
+The tool returns rules in an LLM-optimized format that includes:
+- Rule name and description
+- Code templates and examples
+- Language-specific formatting context
+- Priority and requirement status
 
 ## License
 
