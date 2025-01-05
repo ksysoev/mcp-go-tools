@@ -35,29 +35,12 @@ Input Parameters:
   * "documentation" - rules for comments, package docs, and godoc
   * "testing" - testing conventions, table tests, benchmarks
   * "code" - code organization, naming, interfaces, error handling, concurrency
+  * "template" - template for go application structure
 
 Returns:
 - Array of matching style rules, each containing:
   * Name and description
   * Code templates and examples
-  * Priority level
-  * Whether the rule is required
-
-Example Usage:
-1. Get testing guidelines:
-   {
-     "categories": "testing"
-   }
-
-2. Get documentation standards:
-   {
-     "categories": "documentation"
-   }
-
-3. Get code organization rules:
-   {
-     "categories": "code"
-   }
 `
 
 // ToolHandler defines the interface for handling code generation rule operations.

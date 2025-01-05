@@ -202,3 +202,180 @@ rules:
                   // Test update operation
               })
           }
+
+  # Application template
+  - name: "Excecutable files"
+    category: "template"
+    description: "All main go files should be logcatead in ./cmd/example-app/main.go directory"
+    examples:
+      - description: "Main file should not contain any logic, only responsible for starting the application"
+        code: |
+          package main
+
+          import (
+            "context"
+            "log/slog"
+            "os"
+            "os/signal"
+            "syscall"
+
+            "github.com/user/example/pkg/cmd"
+          )
+
+          // version is the version of the application. It should be set at build time.
+          var version = "dev"
+
+          func main() {
+            ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+
+            rootCmd := cmd.InitCommands(version)
+
+            if err := rootCmd.ExecuteContext(ctx); err != nil {
+              slog.Error("failed to execute command", slog.Any("error", err))
+              os.Exit(1)
+            }
+          }
+  - name: "Command Line Interface"
+    category: "template"
+    description: "All command line interfaces loggic and also wiring logic should be located in ./pkg/cmd directory"
+    examples:
+      - description: "CLI commands initialization, we should use cobra framework for designing cli interface of the application. File should be located in ./pkg/cmd/init.go"
+        code: |
+          package cmd
+
+          import (
+            "fmt"
+            "log/slog"
+
+            "github.com/spf13/cobra"
+          )
+
+          type args struct {
+            version              string
+            LogLevel             string
+            ConfigPath           string
+            TextFormat           bool
+          }
+
+          // InitCommands initializes and returns the root command for the application.
+          func InitCommands(version string) (*cobra.Command, error) {
+            args := &args{
+              build:   build,
+              version: version,
+            }
+
+            cmd := &cobra.Command{
+              Use:   "example-app",
+              Short: "Example application",
+              Long:  "Example application for demonstrating best practices",
+            }
+
+            cmd.AddCommand(ServerCommand(args))
+
+            cmd.PersistentFlags().StringVar(&args.ConfigPath, "config", "", "config file path")
+            cmd.PersistentFlags().StringVar(&args.LogLevel, "loglevel", "info", "log level (debug, info, warn, error)")
+            cmd.PersistentFlags().BoolVar(&args.TextFormat, "logtext", false, "log in text format, otherwise JSON")
+
+            return cmd, nil
+          }
+
+          // ServerCommand creates a new cobra.Command to start example-app server.
+          func ServerCommand(arg *args) *cobra.Command {
+            return &cobra.Command{
+              Use:   "server",
+              Short: "Start Example server",
+              Long:  "Start Example server",
+              RunE: func(cmd *cobra.Command, _ []string) error {
+                if err := initLogger(arg); err != nil {
+                  return err
+                }
+
+                slog.Info("Starting Example server", slog.String("version", arg.version), slog.String("build", arg.build))
+
+                cfg, err := initConfig(arg)
+                if err != nil {
+                  return err
+                }
+
+                return runServer(cmd.Context(), cfg)
+              },
+            }
+          }
+      - description: "Configuration initialization, we should use viper for configuration management. File should be located in ./pkg/cmd/config.go"
+        code: |
+          package cmd
+
+          import (
+            "context"
+            "fmt"
+            "log/slog"
+
+            "github.com/user/example/pkg/api"
+            "github.com/user/example/pkg/repo"
+            "github.com/spf13/viper"
+          )
+
+          type Config struct {
+            Server    api.Config    `mapstructure:"api"`
+            Database  repo.Config   `mapstructure:"database"`
+          }
+
+          // initConfig initializes the configuration by reading from the specified config file.
+          func initConfig(arg *args) (*Config, error) {
+            v := viper.New()
+
+            v.SetConfigFile(arg.ConfigPath)
+
+            if err := v.ReadInConfig(); err != nil {
+              return nil, fmt.Errorf("failed to read config: %w", err)
+            ]
+
+            var cfg Config
+
+            v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+            v.AutomaticEnv()
+
+            if err := v.Unmarshal(&cfg); err != nil {
+              return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+            }
+
+            slog.Debug("Config loaded", slog.Any("config", cfg))
+
+            return &cfg, nil
+          }
+      - description: "Logger initialization, we should use log/slog for logging. File should be located in ./pkg/cmd/logger.go"
+        code: |
+          package cmd
+
+          import (
+            "log/slog"
+            "os"
+          )
+
+          // initLogger initializes the default logger for the application using slog.
+          func initLogger(arg *args) error {
+            var logLever slog.Level
+            if err := logLever.UnmarshalText([]byte(arg.LogLevel)); err != nil {
+              return err
+            }
+
+            options := &slog.HandlerOptions{
+              Level: logLever,
+            }
+
+            var logHandler slog.Handler
+            if arg.TextFormat {
+              logHandler = slog.NewTextHandler(os.Stdout, options)
+            } else {
+              logHandler = slog.NewJSONHandler(os.Stdout, options)
+            }
+
+            logger := slog.New(logHandler).With(
+              slog.String("ver", arg.version),
+              slog.String("app", "example-app"),
+            )
+
+            slog.SetDefault(logger)
+
+            return nil
+          }
