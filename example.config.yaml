@@ -56,6 +56,171 @@ rules:
               Delete(ctx context.Context, id string) error
           }
 
+  # SOLID Principles
+  - name: "single_responsibility_principle"
+    category: "code"
+    description: "Each type should have one, and only one, reason to change"
+    examples:
+      - description: "Good: Separate concerns into different types"
+        code: |
+          type UserService interface {
+              CreateUser(ctx context.Context, user *User) error
+              GetUser(ctx context.Context, id string) (*User, error)
+              UpdateUser(ctx context.Context, user *User) error
+              DeleteUser(ctx context.Context, id string) error
+          }
+
+          type UserValidator interface {
+              ValidateUser(user *User) error
+          }
+
+          type UserNotifier interface {
+              NotifyUserCreated(ctx context.Context, user *User) error
+          }
+      - description: "Bad: Mixing different responsibilities"
+        code: |
+          type UserService interface {
+              CreateUser(ctx context.Context, user *User) error
+              ValidateUserData(user *User) error
+              SendWelcomeEmail(user *User) error
+              UpdateUserInCache(user *User) error
+          }
+
+  - name: "open_closed_principle"
+    category: "code"
+    description: "Software entities should be open for extension, but closed for modification"
+    examples:
+      - description: "Good: Using interfaces and composition for extension"
+        code: |
+          type PaymentProcessor interface {
+              Process(payment *Payment) error
+          }
+
+          type StripeProcessor struct {
+              client *stripe.Client
+          }
+
+          func (s *StripeProcessor) Process(payment *Payment) error {
+              // Stripe-specific implementation
+              return nil
+          }
+
+          type PayPalProcessor struct {
+              client *paypal.Client
+          }
+
+          func (p *PayPalProcessor) Process(payment *Payment) error {
+              // PayPal-specific implementation
+              return nil
+          }
+      - description: "Bad: Using type switches that require modification"
+        code: |
+          func ProcessPayment(payment *Payment) error {
+              switch payment.Type {
+              case "stripe":
+                  // Stripe-specific code
+              case "paypal":
+                  // PayPal-specific code
+              // Need to modify this function for each new payment type
+              default:
+                  return errors.New("unsupported payment type")
+              }
+              return nil
+          }
+
+  - name: "liskov_substitution_principle"
+    category: "code"
+    description: "Subtypes must be substitutable for their base types"
+    examples:
+      - description: "Good: Maintaining contract in interface implementation"
+        code: |
+          type Storage interface {
+              Save(ctx context.Context, data []byte) error
+              Load(ctx context.Context, id string) ([]byte, error)
+          }
+
+          type FileStorage struct {
+              basePath string
+          }
+
+          func (fs *FileStorage) Save(ctx context.Context, data []byte) error {
+              // Implements full Storage interface contract
+              return nil
+          }
+
+          type MemoryStorage struct {
+              data map[string][]byte
+          }
+
+          func (ms *MemoryStorage) Save(ctx context.Context, data []byte) error {
+              // Implements same contract as FileStorage
+              return nil
+          }
+
+  - name: "interface_segregation_principle"
+    category: "code"
+    description: "Clients should not be forced to depend on interfaces they do not use"
+    examples:
+      - description: "Good: Small, focused interfaces"
+        code: |
+          type Reader interface {
+              Read(p []byte) (n int, err error)
+          }
+
+          type Writer interface {
+              Write(p []byte) (n int, err error)
+          }
+              
+          // Compose interfaces when needed
+          type ReadWriter interface {
+              Reader
+              Writer
+          }
+      - description: "Bad: Large interface forcing unnecessary implementations"
+        code: |
+          type FileHandler interface {
+              Read(p []byte) (n int, err error)
+              Write(p []byte) (n int, err error)
+              Close() error
+              Seek(offset int64, whence int) (int64, error)
+              Truncate(size int64) error
+              Sync() error
+          }
+
+  - name: "dependency_inversion_principle"
+    category: "code"
+    description: "High-level modules should not depend on low-level modules. Both should depend on abstractions"
+    examples:
+      - description: "Good: Depending on interfaces"
+        code: |
+          type UserRepository interface {
+              Save(ctx context.Context, user *User) error
+              Find(ctx context.Context, id string) (*User, error)
+          }
+
+          type UserService struct {
+              repo UserRepository // Depends on abstraction
+          }
+
+          func NewUserService(repo UserRepository) *UserService {
+              return &UserService{repo: repo}
+          }
+      - description: "Bad: Depending on concrete implementations"
+        code: |
+          type PostgresUserRepository struct {
+              db *sql.DB
+          }
+
+          type UserService struct {
+              repo *PostgresUserRepository // Directly depends on concrete type
+          }
+
+          func NewUserService(db *sql.DB) *UserService {
+              return &UserService{
+                  repo: &PostgresUserRepository{db: db},
+              }
+          }
+
   # Error handling
   - name: "error_handling"
     category: "code"
