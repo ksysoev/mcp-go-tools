@@ -17,35 +17,20 @@ type Config = []Rule
 
 // Rule defines a universal structure for all types of code generation rules.
 // It mirrors core.Rule but uses mapstructure tags for configuration file parsing.
-// Each rule contains metadata, pattern definition, examples, and applicability criteria.
 type Rule struct {
-	Name        string      `mapstructure:"name"`
-	Category    string      `mapstructure:"category"`
-	Type        string      `mapstructure:"type"`
-	Description string      `mapstructure:"description"`
-	Pattern     RulePattern `mapstructure:"pattern"`
-	Examples    []Example   `mapstructure:"examples"`
-	AppliesTo   []string    `mapstructure:"applies_to"`
-	Priority    int         `mapstructure:"priority"`
-	IsRequired  bool        `mapstructure:"required"`
-}
-
-// RulePattern defines how the rule should be implemented.
-// It contains the template to be used for code generation, variable replacements,
-// and the format specification for the generated code.
-type RulePattern struct {
-	Template     string            `mapstructure:"template"`
-	Replacements map[string]string `mapstructure:"replacements"`
-	Format       string            `mapstructure:"format"`
+	Name        string    `mapstructure:"name"`
+	Category    string    `mapstructure:"category"`
+	Description string    `mapstructure:"description"`
+	Language    string    `mapstructure:"language"`
+	Examples    []Example `mapstructure:"examples"`
 }
 
 // Example provides a usage example for a rule.
-// It includes a description of what the example demonstrates,
-// the actual code snippet, and the context in which it applies.
+// It includes a description of what the example demonstrates
+// and the actual code snippet.
 type Example struct {
 	Description string `mapstructure:"description"`
 	Code        string `mapstructure:"code"`
-	Context     string `mapstructure:"context"`
 }
 
 // Repository provides functionality to work with static resources and code rules.
@@ -71,16 +56,9 @@ func (r *Repository) convertRule(rule Rule) core.Rule {
 	return core.Rule{
 		Name:        rule.Name,
 		Category:    rule.Category,
-		Type:        rule.Type,
 		Description: rule.Description,
-		Pattern: core.RulePattern{
-			Template:     rule.Pattern.Template,
-			Replacements: rule.Pattern.Replacements,
-			Format:       rule.Pattern.Format,
-		},
-		Examples:  convertExamples(rule.Examples),
-		AppliesTo: rule.AppliesTo,
-		Priority:  rule.Priority,
+		Language:    rule.Language,
+		Examples:    convertExamples(rule.Examples),
 	}
 }
 
@@ -115,13 +93,8 @@ func (r *Repository) GetCodeStyle(ctx context.Context, categories []string, lang
 		}
 
 		for _, rule := range *r.config {
-			// Check if rule matches requested language
-			if rule.Pattern.Format != language {
-				continue
-			}
-
-			// Check if rule category matches any requested category
-			if categoryMap[rule.Category] {
+			// Check if rule matches requested language and category
+			if rule.Language == language && categoryMap[rule.Category] {
 				rules = append(rules, r.convertRule(rule))
 			}
 		}

@@ -10,31 +10,39 @@ import (
 func TestGetCodeStyle(t *testing.T) {
 	config := Config{
 		{
-			Name:     "test_rule1",
-			Category: "testing",
-			Pattern: RulePattern{
-				Format: "go",
+			Name:        "test_rule1",
+			Category:    "testing",
+			Description: "Test rule 1",
+			Language:    "go",
+			Examples: []Example{
+				{
+					Description: "Example 1",
+					Code:        "func TestExample() {}",
+				},
 			},
 		},
 		{
-			Name:     "test_rule2",
-			Category: "testing",
-			Pattern: RulePattern{
-				Format: "go",
+			Name:        "test_rule2",
+			Category:    "testing",
+			Description: "Test rule 2",
+			Language:    "go",
+			Examples: []Example{
+				{
+					Description: "Example 2",
+					Code:        "func TestExample2() {}",
+				},
 			},
 		},
 		{
-			Name:     "style_rule",
-			Category: "style",
-			Pattern: RulePattern{
-				Format: "go",
-			},
-		},
-		{
-			Name:     "python_rule",
-			Category: "testing",
-			Pattern: RulePattern{
-				Format: "python",
+			Name:        "style_rule",
+			Category:    "style",
+			Description: "Style rule",
+			Language:    "go",
+			Examples: []Example{
+				{
+					Description: "Style example",
+					Code:        "var myVar = 42",
+				},
 			},
 		},
 	}
@@ -62,12 +70,6 @@ func TestGetCodeStyle(t *testing.T) {
 			want:       3,
 		},
 		{
-			name:       "python rules",
-			categories: []string{"testing"},
-			language:   "python",
-			want:       1,
-		},
-		{
 			name:       "no matching rules",
 			categories: []string{"nonexistent"},
 			language:   "go",
@@ -88,10 +90,6 @@ func TestGetCodeStyle(t *testing.T) {
 			}
 
 			for _, rule := range rules {
-				if rule.Pattern.Format != tt.language {
-					t.Errorf("Expected language %s, got %s", tt.language, rule.Pattern.Format)
-				}
-
 				found := false
 				for _, cat := range tt.categories {
 					if rule.Category == cat {

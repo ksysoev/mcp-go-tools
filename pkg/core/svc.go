@@ -20,22 +20,17 @@ type ResourceRepo interface {
 
 // Rule defines a universal structure for all types of code generation rules.
 // It encapsulates the complete definition of a code generation rule including
-// its metadata, pattern definition, examples, and applicability criteria.
+// its metadata and examples.
 type Rule struct {
-	Name        string      `json:"name"`
-	Category    string      `json:"category"`
-	Type        string      `json:"type"`
-	Description string      `json:"description"`
-	Pattern     RulePattern `json:"pattern"`
-	Examples    []Example   `json:"examples"`
-	AppliesTo   []string    `json:"applies_to"`
-	Priority    int         `json:"priority"`
-	IsRequired  bool        `json:"required"`
+	Name        string    `json:"name"`
+	Category    string    `json:"category"`
+	Description string    `json:"description"`
+	Language    string    `json:"language"`
+	Examples    []Example `json:"examples"`
 }
 
 // FormatForLLM returns a concise, token-optimized string representation of the rule
-// that is easy for Language Models to parse and understand. It omits empty fields
-// and unnecessary metadata to reduce token usage while preserving essential information.
+// that is easy for Language Models to parse and understand.
 func (r *Rule) FormatForLLM() string {
 	var parts []string
 
@@ -45,24 +40,9 @@ func (r *Rule) FormatForLLM() string {
 		parts = append(parts, fmt.Sprintf("Description: %s", r.Description))
 	}
 
-	// Include category and type if present
+	// Include category if present
 	if r.Category != "" {
 		parts = append(parts, fmt.Sprintf("Category: %s", r.Category))
-	}
-	if r.Type != "" {
-		parts = append(parts, fmt.Sprintf("Type: %s", r.Type))
-	}
-
-	// Add pattern information if present
-	if r.Pattern.Template != "" {
-		parts = append(parts, fmt.Sprintf("Template:\n%s", r.Pattern.Template))
-	}
-	if len(r.Pattern.Replacements) > 0 {
-		replacements := make([]string, 0, len(r.Pattern.Replacements))
-		for k, v := range r.Pattern.Replacements {
-			replacements = append(replacements, fmt.Sprintf("%s -> %s", k, v))
-		}
-		parts = append(parts, fmt.Sprintf("Replacements: %s", strings.Join(replacements, ", ")))
 	}
 
 	// Include examples if present
@@ -78,27 +58,7 @@ func (r *Rule) FormatForLLM() string {
 		}
 	}
 
-	// Add applicability and priority information
-	if len(r.AppliesTo) > 0 {
-		parts = append(parts, fmt.Sprintf("Applies to: %s", strings.Join(r.AppliesTo, ", ")))
-	}
-	if r.Priority > 0 {
-		parts = append(parts, fmt.Sprintf("Priority: %d", r.Priority))
-	}
-	if r.IsRequired {
-		parts = append(parts, "Required: yes")
-	}
-
 	return strings.Join(parts, "\n")
-}
-
-// RulePattern defines how the rule should be implemented.
-// It contains the template to be used, any variable replacements,
-// and the format specification for the generated code.
-type RulePattern struct {
-	Template     string            `json:"template"`
-	Replacements map[string]string `json:"replacements"`
-	Format       string            `json:"format"`
 }
 
 // Example provides a usage example for a rule.
@@ -107,7 +67,6 @@ type RulePattern struct {
 type Example struct {
 	Description string `json:"description"`
 	Code        string `json:"code"`
-	Context     string `json:"context"`
 }
 
 // Service implements the core business logic for rule management.

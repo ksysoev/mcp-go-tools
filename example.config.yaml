@@ -1,20 +1,9 @@
 rules:
-  # Example of a code pattern rule
+  # Constructor pattern
   - name: "constructor_pattern"
     category: "code_pattern"
-    type: "template"
     description: "Standard constructor pattern for Go types"
-    pattern:
-      template: |
-        func New{{.TypeName}}({{.Params}}) *{{.TypeName}} {
-            return &{{.TypeName}}{
-                {{.Fields}}
-            }
-        }
-      format: "go"
-    applies_to: ["struct"]
-    priority: 1
-    required: true
+    language: "go"
     examples:
       - description: "Basic constructor"
         code: |
@@ -24,30 +13,26 @@ rules:
                   age: age,
               }
           }
+      - description: "Constructor with validation"
+        code: |
+          func NewConfig(serverAddr string, timeout time.Duration) (*Config, error) {
+              if serverAddr == "" {
+                  return nil, errors.New("server address is required")
+              }
+              if timeout <= 0 {
+                  return nil, errors.New("timeout must be positive")
+              }
+              return &Config{
+                  serverAddr: serverAddr,
+                  timeout:    timeout,
+              }, nil
+          }
 
-  # Basic test pattern with testify
+  # Basic test pattern
   - name: "basic_test_pattern"
     category: "testing"
-    type: "template"
     description: "Standard test pattern using testify assertions"
-    pattern:
-      template: |
-        func Test{{.Name}}(t *testing.T) {
-            // Arrange
-            assert := assert.New(t)
-            require := require.New(t)
-            
-            // Act
-            {{.TestLogic}}
-            
-            // Assert
-            require.NoError(err)
-            assert.Equal(expected, result)
-        }
-      format: "go"
-    applies_to: ["function", "method"]
-    priority: 1
-    required: true
+    language: "go"
     examples:
       - description: "Basic test with testify"
         code: |
@@ -64,157 +49,98 @@ rules:
               assert.Equal("John", user.Name)
               assert.Equal(25, user.Age)
           }
+      - description: "Test with setup and cleanup"
+        code: |
+          func TestProcessData(t *testing.T) {
+              // Arrange
+              assert := assert.New(t)
+              require := require.New(t)
+              
+              // Setup test data
+              data := setupTestData(t)
+              defer cleanupTestData(t)
+              
+              // Act
+              result, err := ProcessData(data)
+              
+              // Assert
+              require.NoError(err)
+              assert.NotNil(result)
+              assert.Equal(expected, result.Value)
+          }
 
   # Table-driven test pattern
   - name: "table_test_pattern"
     category: "testing"
-    type: "template"
     description: "Table-driven test pattern for multiple test cases"
-    pattern:
-      template: |
-        func Test{{.Name}}(t *testing.T) {
-            tests := []struct {
-                name    string
-                {{.InputFields}}
-                want    {{.OutputType}}
-                wantErr error
-            }{
-                {
-                    name: "{{.TestCaseName}}",
-                    {{.TestCaseFields}}
-                },
-            }
-            
-            for _, tt := range tests {
-                t.Run(tt.name, func(t *testing.T) {
-                    got, err := {{.FunctionName}}({{.InputParams}})
-                    if tt.wantErr != nil {
-                        assert.ErrorIs(t, err, tt.wantErr)
-                        return
-                    }
-                    assert.NoError(t, err)
-                    assert.Equal(t, tt.want, got)
-                })
-            }
-        }
-      format: "go"
-    applies_to: ["function", "method"]
-    priority: 1
-    required: true
-
-  # Mock usage pattern
-  - name: "mock_pattern"
-    category: "testing"
-    type: "template"
-    description: "Standard pattern for using mocks with mockery"
-    pattern:
-      template: |
-        func Test{{.Name}}WithMock(t *testing.T) {
-            // Arrange
-            mock := mocks.New{{.Interface}}(t)
-            mock.On("{{.Method}}", mock.Anything, {{.Params}}).
-                Return({{.ReturnValues}})
-            
-            sut := New{{.Type}}(mock)
-            
-            // Act
-            {{.TestLogic}}
-            
-            // Assert
-            mock.AssertExpectations(t)
-        }
-      format: "go"
-    applies_to: ["interface"]
-    priority: 1
-    required: true
+    language: "go"
     examples:
-      - description: "Mock usage example"
+      - description: "Table test for validation function"
         code: |
-          func TestUserServiceWithMock(t *testing.T) {
-              // Arrange
-              mockRepo := mocks.NewUserRepository(t)
-              mockRepo.On("Get", mock.Anything, "123").
-                  Return(&User{ID: "123", Name: "John"}, nil)
+          func TestValidateUser(t *testing.T) {
+              tests := []struct {
+                  name    string
+                  user    User
+                  wantErr error
+              }{
+                  {
+                      name: "valid user",
+                      user: User{Name: "John", Age: 25},
+                      wantErr: nil,
+                  },
+                  {
+                      name: "invalid age",
+                      user: User{Name: "John", Age: -1},
+                      wantErr: ErrInvalidAge,
+                  },
+              }
               
-              service := NewUserService(mockRepo)
-              
-              // Act
-              user, err := service.GetUser(context.Background(), "123")
-              
-              // Assert
-              assert.NoError(t, err)
-              assert.Equal(t, "John", user.Name)
-              mockRepo.AssertExpectations(t)
+              for _, tt := range tests {
+                  t.Run(tt.name, func(t *testing.T) {
+                      err := ValidateUser(tt.user)
+                      if tt.wantErr != nil {
+                          assert.ErrorIs(t, err, tt.wantErr)
+                          return
+                      }
+                      assert.NoError(t, err)
+                  })
+              }
           }
 
-  # Test organization pattern
-  - name: "test_suite_pattern"
-    category: "testing"
-    type: "template"
-    description: "Pattern for organizing related tests using testify suite"
-    pattern:
-      template: |
-        type {{.Name}}Suite struct {
-            suite.Suite
-            {{.Fields}}
-        }
-        
-        func (s *{{.Name}}Suite) SetupTest() {
-            {{.SetupLogic}}
-        }
-        
-        func (s *{{.Name}}Suite) Test{{.TestName}}() {
-            {{.TestLogic}}
-        }
-        
-        func Test{{.Name}}(t *testing.T) {
-            suite.Run(t, new({{.Name}}Suite))
-        }
-      format: "go"
-    applies_to: ["struct"]
-    priority: 1
-    required: true
-
-  # Example of a naming rule
-  - name: "naming_convention"
-    category: "style"
-    type: "template"
-    description: "Naming conventions for Go code"
-    pattern:
-      template: "{{.Name}}"
-      format: "go"
-    applies_to: ["interface", "variable", "function", "type"]
-    priority: 2
-    required: true
-
-  # Example of an error handling rule
+  # Error handling pattern
   - name: "error_handling"
     category: "error"
-    type: "pattern"
     description: "Standard error handling patterns"
-    pattern:
-      template: "return fmt.Errorf(\"{{.Operation}}: %w\", err)"
-      format: "go"
-    applies_to: ["function", "method"]
-    priority: 1
-    required: true
+    language: "go"
+    examples:
+      - description: "Error wrapping"
+        code: |
+          func ProcessUser(user *User) error {
+              if user == nil {
+                  return ErrInvalidInput
+              }
+              
+              if err := validate(user); err != nil {
+                  return fmt.Errorf("validate user: %w", err)
+              }
+              
+              return nil
+          }
+      - description: "Custom error types"
+        code: |
+          type NotFoundError struct {
+              ID string
+          }
+          
+          func (e *NotFoundError) Error() string {
+              return fmt.Sprintf("user not found: %s", e.ID)
+          }
 
   # Function documentation pattern
   - name: "func_doc_standard"
     category: "documentation"
-    type: "template"
     description: "Standard documentation format for Go functions"
-    pattern:
-      template: |
-        // {{.Name}} {{.Action}} {{.Description}}.
-        // It {{.BehaviorDetails}}.
-        {{if .HasParams}}// {{.ParamDocs}}{{end}}
-        {{if .HasReturns}}// Returns {{.ReturnDocs}}{{end}}
-        {{if .HasErrors}}// Returns error if {{.ErrorConditions}}{{end}}
-      format: "go"
-    applies_to: ["function", "method"]
-    priority: 1
-    required: true
+    language: "go"
     examples:
       - description: "Simple function documentation"
         code: |
@@ -233,40 +159,23 @@ rules:
   # Package documentation pattern
   - name: "package_doc_standard"
     category: "documentation"
-    type: "template"
     description: "Standard documentation format for Go packages"
-    pattern:
-      template: |
-        // Package {{.Name}} {{.Description}}.
-        {{if .HasDetails}}//
-        // {{.Details}}{{end}}
-      format: "go"
-    applies_to: ["package"]
-    priority: 1
-    required: true
+    language: "go"
     examples:
       - description: "Package documentation"
         code: |
           // Package calculator provides basic arithmetic operations
           // and advanced mathematical calculations.
+          //
+          // It implements common mathematical functions and utilities
+          // while ensuring thread-safety and proper error handling.
           package calculator
 
   # Interface documentation pattern
   - name: "interface_doc_standard"
     category: "documentation"
-    type: "template"
     description: "Standard documentation format for Go interfaces"
-    pattern:
-      template: |
-        // {{.Name}} {{.Description}}.
-        {{if .HasDetails}}//
-        // {{.Details}}{{end}}
-        {{range .Methods}}// {{.Name}} {{.Description}}.
-        // {{.BehaviorDetails}}{{end}}
-      format: "go"
-    applies_to: ["interface"]
-    priority: 1
-    required: true
+    language: "go"
     examples:
       - description: "Interface documentation"
         code: |
@@ -277,48 +186,15 @@ rules:
           type Reader interface {
               Read(p []byte) (n int, err error)
           }
-
-  # Constant and variable documentation pattern
-  - name: "const_var_doc_standard"
-    category: "documentation"
-    type: "template"
-    description: "Standard documentation format for Go constants and variables"
-    pattern:
-      template: |
-        // {{.Name}} {{.Description}}
-        {{if .HasDetails}}// {{.Details}}{{end}}
-      format: "go"
-    applies_to: ["const", "var"]
-    priority: 1
-    required: true
-    examples:
-      - description: "Constant documentation"
+      - description: "Complex interface documentation"
         code: |
-          // MaxRetries is the maximum number of retry attempts for network operations
-          const MaxRetries = 3
-      - description: "Variable documentation"
-        code: |
-          // DefaultTimeout is the default duration before operations timeout
-          var DefaultTimeout = 30 * time.Second
-
-  # Concurrency documentation pattern
-  - name: "concurrency_doc_standard"
-    category: "documentation"
-    type: "template"
-    description: "Documentation pattern for concurrent operations"
-    pattern:
-      template: |
-        // {{.Name}} {{.Description}}.
-        // This {{if .IsConcurrentSafe}}is{{else}}is not{{end}} safe for concurrent use.
-        {{if .HasSyncRequirements}}// Synchronization requirements: {{.SyncRequirements}}{{end}}
-      format: "go"
-    applies_to: ["function", "method", "type"]
-    priority: 1
-    required: true
-    examples:
-      - description: "Concurrent safe function"
-        code: |
-          // ProcessQueue handles incoming requests from the queue.
-          // This is safe for concurrent use.
-          // Synchronization requirements: Caller must ensure queue is initialized.
-          func ProcessQueue(ctx context.Context, queue *Queue)
+          // UserRepository defines the interface for user data access operations.
+          //
+          // It provides methods for CRUD operations on user entities and ensures
+          // proper transaction handling and data consistency.
+          type UserRepository interface {
+              Create(ctx context.Context, user *User) error
+              Get(ctx context.Context, id string) (*User, error)
+              Update(ctx context.Context, user *User) error
+              Delete(ctx context.Context, id string) error
+          }
