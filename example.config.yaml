@@ -170,7 +170,7 @@ rules:
           type Writer interface {
               Write(p []byte) (n int, err error)
           }
-              
+
           // Compose interfaces when needed
           type ReadWriter interface {
               Reader
