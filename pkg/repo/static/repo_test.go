@@ -13,7 +13,6 @@ func TestGetCodeStyle(t *testing.T) {
 			Name:        "test_rule1",
 			Category:    "testing",
 			Description: "Test rule 1",
-			Language:    "go",
 			Examples: []Example{
 				{
 					Description: "Example 1",
@@ -25,7 +24,6 @@ func TestGetCodeStyle(t *testing.T) {
 			Name:        "test_rule2",
 			Category:    "testing",
 			Description: "Test rule 2",
-			Language:    "go",
 			Examples: []Example{
 				{
 					Description: "Example 2",
@@ -34,10 +32,9 @@ func TestGetCodeStyle(t *testing.T) {
 			},
 		},
 		{
-			Name:        "style_rule",
-			Category:    "style",
-			Description: "Style rule",
-			Language:    "go",
+			Name:        "code_rule",
+			Category:    "code",
+			Description: "Code style rule",
 			Examples: []Example{
 				{
 					Description: "Style example",
@@ -54,25 +51,21 @@ func TestGetCodeStyle(t *testing.T) {
 	tests := []struct {
 		name       string
 		categories []string
-		language   string
 		want       int
 	}{
 		{
-			name:       "single category go rules",
+			name:       "single category rules",
 			categories: []string{"testing"},
-			language:   "go",
 			want:       2,
 		},
 		{
-			name:       "multiple categories go rules",
-			categories: []string{"testing", "style"},
-			language:   "go",
+			name:       "multiple categories rules",
+			categories: []string{"testing", "code"},
 			want:       3,
 		},
 		{
 			name:       "no matching rules",
 			categories: []string{"nonexistent"},
-			language:   "go",
 			want:       0,
 		},
 	}
@@ -80,7 +73,7 @@ func TestGetCodeStyle(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var rules []core.Rule
-			rules, err := svc.GetCodeStyle(ctx, tt.categories, tt.language)
+			rules, err := svc.GetCodeStyle(ctx, tt.categories)
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}

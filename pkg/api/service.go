@@ -19,31 +19,22 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const codeStyleDescription = `Retrieve coding style guidelines and best practices for generating idiomatic code.
+const codeStyleDescription = `Retrieve coding style guidelines and best practices for generating idiomatic Go code.
 
-This tool helps Language Models understand and apply consistent coding standards when generating or modifying code. It provides language-specific rules, patterns, and examples for writing high-quality, maintainable code.
+This tool helps Language Models understand and apply consistent coding standards when generating or modifying Go code. It provides rules, patterns, and examples for writing high-quality, maintainable Go code.
 
 Use this tool when you need to:
-1. Generate new code that follows language idioms
-2. Understand naming conventions (e.g., how to name interfaces, variables)
-3. Apply proper code organization (e.g., file structure, package layout)
-4. Implement language-specific patterns and practices
-5. Format code according to language standards
+1. Generate new Go code that follows language idioms
+2. Understand Go naming conventions and package organization
+3. Apply proper code organization and project structure
+4. Implement Go-specific patterns and practices
+5. Format code according to Go standards
 
 Input Parameters:
 - categories: Comma separated list of rule categories to filter by
-  * "naming" - conventions for naming variables, functions, types
-  * "formatting" - code formatting and style rules
-  * "organization" - code structure and layout guidelines
-  * "patterns" - common design patterns and implementations
-  * "documentation" - rules for comments and documentation
-  * "interfaces" - interface design principles (Go-specific)
-  * "packages" - package organization rules (Go-specific)
-  * "errors" - error handling conventions (Go-specific)
-  * "concurrency" - concurrent programming patterns (Go-specific)
-
-- language: Target programming language (lowercase)
-  Examples: "go", "typescript"
+  * "documentation" - rules for comments, package docs, and godoc
+  * "testing" - testing conventions, table tests, benchmarks
+  * "code" - code organization, naming, interfaces, error handling, concurrency
 
 Returns:
 - Array of matching style rules, each containing:
@@ -53,16 +44,19 @@ Returns:
   * Whether the rule is required
 
 Example Usage:
-1. Get Go interface naming rules:
+1. Get testing guidelines:
    {
-     "categories": ["naming", "interfaces"],
-     "language": "go"
+     "categories": "testing"
    }
 
-2. Get Python documentation standards:
+2. Get documentation standards:
    {
-     "categories": ["documentation"],
-     "language": "python"
+     "categories": "documentation"
+   }
+
+3. Get code organization rules:
+   {
+     "categories": "code"
    }
 `
 
@@ -70,7 +64,7 @@ Example Usage:
 // Implementations must be safe for concurrent use as methods may be called
 // simultaneously by different MCP tool handlers.
 type ToolHandler interface {
-	GetCodeStyle(ctx context.Context, categories []string, language string) ([]core.Rule, error)
+	GetCodeStyle(ctx context.Context, categories []string) ([]core.Rule, error)
 }
 
 // Config holds the service configuration parameters.
@@ -134,10 +128,8 @@ func (s *Service) Run(ctx context.Context) error {
 // CategoryArgs holds the category parameter for rule filtering.
 // Used to specify the category of code generation rules to retrieve.
 type CodeStyleArgs struct {
-	// Category name for filtering rules
-	// Example: "controller", "repository", "service"
-	Categories string `json:"category" jsonschema:"required,description=The category name for filtering code generation rules, it can contation comma separate list. Examples: 'testing', 'documentation', 'code', 'project'"`
-	Language   string `json:"language" jsonschema:"required,description=The language name for filtering code generation rules. Should be lowercase and consistent. Examples: 'go', 'typescript', 'python', 'java', 'csharp', 'rust'"`
+	// Categories for filtering rules
+	Categories string `json:"categories" jsonschema:"required,description=The categories for filtering code generation rules. Comma-separated list of: 'documentation', 'testing', 'code'"`
 }
 
 // mustMarshal marshals the value to JSON and panics on error.
@@ -157,7 +149,7 @@ func mustMarshal(v interface{}) []byte {
 func (s *Service) setupTools(server *mcp.Server) error {
 	// Register get rules by category tool
 	err := server.RegisterTool("codestyle", codeStyleDescription, func(args CodeStyleArgs) (*mcp.ToolResponse, error) {
-		slog.Debug("handling get_code_guidelines request", "category", args.Categories, "language", args.Language)
+		slog.Debug("handling get_code_guidelines request", "categories", args.Categories)
 
 		// Split categories by comma
 		categories := strings.Split(args.Categories, ",")
@@ -165,7 +157,7 @@ func (s *Service) setupTools(server *mcp.Server) error {
 			categories[i] = strings.TrimSpace(cat)
 		}
 
-		rules, err := s.handler.GetCodeStyle(context.Background(), categories, args.Language)
+		rules, err := s.handler.GetCodeStyle(context.Background(), categories)
 		if err != nil {
 			slog.Debug("get_rules_by_category failed", "error", err)
 			return nil, fmt.Errorf("get rules by category: %w", err)

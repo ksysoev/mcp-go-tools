@@ -26,7 +26,6 @@ func TestStartServerWithError(t *testing.T) {
 						Name:        "test_rule",
 						Category:    "testing",
 						Description: "test rule",
-						Language:    "go",
 					},
 				},
 			},

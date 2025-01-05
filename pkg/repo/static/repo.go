@@ -19,9 +19,8 @@ type Config = []Rule
 // It mirrors core.Rule but uses mapstructure tags for configuration file parsing.
 type Rule struct {
 	Name        string    `mapstructure:"name"`
-	Category    string    `mapstructure:"category"`
+	Category    string    `mapstructure:"category"` // One of: "documentation", "testing", "code"
 	Description string    `mapstructure:"description"`
-	Language    string    `mapstructure:"language"`
 	Examples    []Example `mapstructure:"examples"`
 }
 
@@ -57,7 +56,6 @@ func (r *Repository) convertRule(rule Rule) core.Rule {
 		Name:        rule.Name,
 		Category:    rule.Category,
 		Description: rule.Description,
-		Language:    rule.Language,
 		Examples:    convertExamples(rule.Examples),
 	}
 }
@@ -76,10 +74,10 @@ func convertExamples(examples []Example) []core.Example {
 	return result
 }
 
-// GetCodeStyle returns all rules that match the specified categories and language.
-// It filters the configuration rules by categories and language, converting matches to core.Rule format.
+// GetCodeStyle returns all rules that match the specified categories.
+// It filters the configuration rules by categories, converting matches to core.Rule format.
 // Returns error if the context is cancelled.
-func (r *Repository) GetCodeStyle(ctx context.Context, categories []string, language string) ([]core.Rule, error) {
+func (r *Repository) GetCodeStyle(ctx context.Context, categories []string) ([]core.Rule, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -93,8 +91,8 @@ func (r *Repository) GetCodeStyle(ctx context.Context, categories []string, lang
 		}
 
 		for _, rule := range *r.config {
-			// Check if rule matches requested language and category
-			if rule.Language == language && categoryMap[rule.Category] {
+			// Check if rule matches requested category
+			if categoryMap[rule.Category] {
 				rules = append(rules, r.convertRule(rule))
 			}
 		}

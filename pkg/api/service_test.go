@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/ksysoev/mcp-code-tools/pkg/core"
@@ -18,7 +20,7 @@ type mockToolHandler struct {
 	err   error
 }
 
-func (m *mockToolHandler) GetCodeStyle(_ context.Context, _ []string, _ string) ([]core.Rule, error) {
+func (m *mockToolHandler) GetCodeStyle(_ context.Context, _ []string) ([]core.Rule, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -54,7 +56,6 @@ func TestService_setupTools(t *testing.T) {
 						Name:        "test_rule",
 						Category:    "testing",
 						Description: "Test rule",
-						Language:    "go",
 						Examples: []core.Example{
 							{
 								Description: "Example",
@@ -108,7 +109,6 @@ func TestService_Run(t *testing.T) {
 						Name:        "test_rule",
 						Category:    "testing",
 						Description: "Test rule",
-						Language:    "go",
 						Examples: []core.Example{
 							{
 								Description: "Example",
@@ -166,7 +166,6 @@ func TestCodeStyleArgs_Validation(t *testing.T) {
 			name: "valid args",
 			args: CodeStyleArgs{
 				Categories: "testing",
-				Language:   "go",
 			},
 			wantErr: false,
 		},
@@ -174,7 +173,6 @@ func TestCodeStyleArgs_Validation(t *testing.T) {
 			name: "multiple categories",
 			args: CodeStyleArgs{
 				Categories: "testing,documentation",
-				Language:   "go",
 			},
 			wantErr: false,
 		},
@@ -182,15 +180,13 @@ func TestCodeStyleArgs_Validation(t *testing.T) {
 			name: "empty categories",
 			args: CodeStyleArgs{
 				Categories: "",
-				Language:   "go",
 			},
 			wantErr: true,
 		},
 		{
-			name: "empty language",
+			name: "invalid category",
 			args: CodeStyleArgs{
-				Categories: "testing",
-				Language:   "",
+				Categories: "invalid",
 			},
 			wantErr: true,
 		},
@@ -216,8 +212,21 @@ func (a *CodeStyleArgs) Validate() error {
 	if a.Categories == "" {
 		return errors.New("categories is required")
 	}
-	if a.Language == "" {
-		return errors.New("language is required")
+
+	// Split and validate each category
+	validCategories := map[string]bool{
+		"documentation": true,
+		"testing":       true,
+		"code":          true,
 	}
+
+	categories := strings.Split(a.Categories, ",")
+	for _, cat := range categories {
+		cat = strings.TrimSpace(cat)
+		if !validCategories[cat] {
+			return fmt.Errorf("invalid category: %s", cat)
+		}
+	}
+
 	return nil
 }

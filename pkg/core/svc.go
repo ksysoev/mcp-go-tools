@@ -14,8 +14,8 @@ import (
 // ResourceRepo defines the interface for managing code generation rules and resources.
 // It provides methods to retrieve rules by categories and language.
 type ResourceRepo interface {
-	// GetCodeStyle returns all rules that match the specified categories and language
-	GetCodeStyle(ctx context.Context, categories []string, language string) ([]Rule, error)
+	// GetCodeStyle returns all rules that match the specified categories
+	GetCodeStyle(ctx context.Context, categories []string) ([]Rule, error)
 }
 
 // Rule defines a universal structure for all types of code generation rules.
@@ -23,9 +23,8 @@ type ResourceRepo interface {
 // its metadata and examples.
 type Rule struct {
 	Name        string    `json:"name"`
-	Category    string    `json:"category"`
+	Category    string    `json:"category"` // One of: "documentation", "testing", "code"
 	Description string    `json:"description"`
-	Language    string    `json:"language"`
 	Examples    []Example `json:"examples"`
 }
 
@@ -83,11 +82,11 @@ func New(resource ResourceRepo) *Service {
 	}
 }
 
-// GetCodeStyle retrieves rules that match the specified categories and language.
+// GetCodeStyle retrieves rules that match the specified categories.
 // It returns a slice of rules and any error encountered during the retrieval.
 // Returns error if the repository access fails.
-func (s *Service) GetCodeStyle(ctx context.Context, categories []string, language string) ([]Rule, error) {
-	return s.resource.GetCodeStyle(ctx, categories, language)
+func (s *Service) GetCodeStyle(ctx context.Context, categories []string) ([]Rule, error) {
+	return s.resource.GetCodeStyle(ctx, categories)
 }
 
 // String implements the Stringer interface for Rule.

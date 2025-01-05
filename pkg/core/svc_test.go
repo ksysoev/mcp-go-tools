@@ -14,7 +14,7 @@ type mockResourceRepo struct {
 	err   error
 }
 
-func (m *mockResourceRepo) GetCodeStyle(_ context.Context, categories []string, language string) ([]Rule, error) {
+func (m *mockResourceRepo) GetCodeStyle(_ context.Context, categories []string) ([]Rule, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -39,7 +39,6 @@ func TestGetCodeStyle(t *testing.T) {
 		name       string
 		repo       *mockResourceRepo
 		categories []string
-		language   string
 		want       []Rule
 		wantErr    bool
 	}{
@@ -51,7 +50,6 @@ func TestGetCodeStyle(t *testing.T) {
 						Name:        "test_rule",
 						Category:    "testing",
 						Description: "Test rule description",
-						Language:    "go",
 						Examples: []Example{
 							{
 								Description: "Example description",
@@ -62,13 +60,11 @@ func TestGetCodeStyle(t *testing.T) {
 				},
 			},
 			categories: []string{"testing"},
-			language:   "go",
 			want: []Rule{
 				{
 					Name:        "test_rule",
 					Category:    "testing",
 					Description: "Test rule description",
-					Language:    "go",
 					Examples: []Example{
 						{
 							Description: "Example description",
@@ -85,7 +81,6 @@ func TestGetCodeStyle(t *testing.T) {
 				err: assert.AnError,
 			},
 			categories: []string{"testing"},
-			language:   "go",
 			want:       nil,
 			wantErr:    true,
 		},
@@ -95,7 +90,6 @@ func TestGetCodeStyle(t *testing.T) {
 				rules: []Rule{},
 			},
 			categories: []string{"nonexistent"},
-			language:   "go",
 			want:       []Rule{},
 			wantErr:    false,
 		},
@@ -108,7 +102,7 @@ func TestGetCodeStyle(t *testing.T) {
 			ctx := context.Background()
 
 			// Act
-			got, err := svc.GetCodeStyle(ctx, tt.categories, tt.language)
+			got, err := svc.GetCodeStyle(ctx, tt.categories)
 
 			// Assert
 			if tt.wantErr {
@@ -133,7 +127,6 @@ func TestRule_String(t *testing.T) {
 				Name:        "test_rule",
 				Category:    "testing",
 				Description: "Test description",
-				Language:    "go",
 				Examples: []Example{
 					{
 						Description: "Example 1",
@@ -156,7 +149,6 @@ func TestRule_String(t *testing.T) {
 				Name:        "no_examples",
 				Category:    "testing",
 				Description: "No examples here",
-				Language:    "go",
 			},
 			want: "Rule: no_examples\nDescription: No examples here\nCategory: testing",
 		},
