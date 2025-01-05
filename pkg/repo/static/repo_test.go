@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ksysoev/mcp-code-tools/pkg/core"
+	"github.com/ksysoev/mcp-go-tools/pkg/core"
 )
 
 func TestGetCodeStyle(t *testing.T) {

@@ -29,7 +29,7 @@ func InitCommands(build, version string) (*cobra.Command, error) {
 	}
 
 	cmd := &cobra.Command{
-		Use:     "mcp-code-tools",
+		Use:     "mcp-go-tools",
 		Short:   "MCP code tools server",
 		Long:    "Model Context Protocol server for code generation tools",
 		Version: fmt.Sprintf("%s (Build: %s)", version, build),

@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/ksysoev/mcp-code-tools/pkg/api"
-	"github.com/ksysoev/mcp-code-tools/pkg/repo/static"
+	"github.com/ksysoev/mcp-go-tools/pkg/api"
+	"github.com/ksysoev/mcp-go-tools/pkg/repo/static"
 	"github.com/spf13/viper"
 )
 

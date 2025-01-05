@@ -44,7 +44,7 @@ func TestInitCommands(t *testing.T) {
 			assert.NotNil(t, cmd)
 
 			// Verify command structure
-			assert.Equal(t, "mcp-code-tools", cmd.Use)
+			assert.Equal(t, "mcp-go-tools", cmd.Use)
 			assert.Equal(t, "MCP code tools server", cmd.Short)
 			assert.Equal(t, "Model Context Protocol server for code generation tools", cmd.Long)
 			assert.Equal(t, tt.version+" (Build: "+tt.build+")", cmd.Version)

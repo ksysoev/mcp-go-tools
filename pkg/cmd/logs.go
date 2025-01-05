@@ -53,7 +53,7 @@ func initLogger(arg *args) error {
 
 	logger := slog.New(logHandler).With(
 		slog.String("ver", arg.version),
-		slog.String("app", "mcp-code-tools"),
+		slog.String("app", "mcp-go-tools"),
 	)
 
 	slog.SetDefault(logger)

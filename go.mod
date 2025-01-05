@@ -1,4 +1,4 @@
-module github.com/ksysoev/mcp-code-tools
+module github.com/ksysoev/mcp-go-tools
 
 go 1.23.4
 

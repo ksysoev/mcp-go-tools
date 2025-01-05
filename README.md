@@ -20,7 +20,7 @@ The Model Context Protocol (MCP) is implemented using the `github.com/metoro-io/
 ## Installation
 
 ```bash
-go install github.com/ksysoev/mcp-code-tools/cmd/mcp@latest
+go install github.com/ksysoev/mcp-go-tools/cmd/mcp-go-tools@latest
 ```
 
 ## Features
@@ -51,19 +51,7 @@ For detailed usage examples and patterns, see [USAGE.md](USAGE.md).
 #### Start Server
 Starts the MCP server with the specified configuration:
 ```bash
-mcp start --config config.yaml --log-level debug
-```
-
-#### Run with JSON Logging
-Run the server with structured JSON logging (default):
-```bash
 mcp start --config config.yaml
-```
-
-#### Run with Text Logging
-Run the server with human-readable text logging:
-```bash
-mcp start --config config.yaml --log-text
 ```
 
 #### Run with File Logging
@@ -149,13 +137,14 @@ The project is in active development with the following components:
 - ✅ MCP protocol integration
 - ✅ Go code pattern recognition
 - ✅ Idiomatic Go code generation
-- 🚧 Go project templates
-- 🚧 Advanced code analysis
+- ✅ Go project templates
+- 🚧 Add integration with mockery
+- 🚧 Add integration linters
 
 ### Building from Source
 
 ```bash
-go build -o mcp ./cmd/mcp
+go build -o mcp-go-tools ./cmd/mcp-go-tools
 ```
 
 ### Running Tests
@@ -174,8 +163,8 @@ Add the following configuration to the `mcpServers` object in the settings file:
 {
   "mcpServers": {
     "code-tools": {
-      "command": "mcp-code-tools",
-      "args": ["server", "--config=/Users/user/mcp-code-tools/example.config.yaml",  "--log-level=WARN"],
+      "command": "mcp-go-tools",
+      "args": ["server", "--config=/Users/user/mcp-go-tools/example.config.yaml"],
       "env": {}
     }
   }
@@ -188,47 +177,9 @@ Custom instructions example:
 ```
 Use project template to initialize new applications for GoLang, it's available in MCP server code-tools `codestyle ` with category `template`
 
-Every time you you need to generate code use MCP server code-tools `codestyle ` with required category `code`, `documentation`, `testing`
+Every time you need to generate code use MCP server code-tools `codestyle ` with required category `code`, `documentation`, `testing`
 ```
 
-
-After adding the configuration, Cline will have access to the following tool:
-
-### codestyle
-
-Retrieves Go-specific coding style guidelines and best practices for generating idiomatic Go code. This tool helps Language Models understand and apply consistent coding standards when writing or modifying Go code.
-
-Parameters:
-- `category`: Comma-separated list of rule categories to filter by
-  * "code" - Go code patterns, structures, and best practices
-  * "documentation" - Go documentation conventions and standards
-  * "testing" - Go testing patterns and practices
-
-Returns:
-- Go-specific formatting guidelines
-- Code style rules with examples and templates
-- Priority levels and requirement status
-
-Example usage in Cline:
-```
-You: Show me Go interface patterns
-Cline: Let me get those rules for you...
-[Uses codestyle tool with categories="code"]
-
-You: How should I document my Go package?
-Cline: I'll check the documentation guidelines...
-[Uses codestyle tool with categories="documentation"]
-
-You: What's the best way to write table-driven tests?
-Cline: I'll show you the testing patterns...
-[Uses codestyle tool with categories="testing"]
-```
-
-The tool returns rules in an LLM-optimized format that includes:
-- Rule name and description
-- Go code templates and examples
-- Go-specific formatting context
-- Priority and requirement status
 
 ## License
 

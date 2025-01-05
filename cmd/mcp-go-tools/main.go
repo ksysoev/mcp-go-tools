@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ksysoev/mcp-code-tools/pkg/cmd"
+	"github.com/ksysoev/mcp-go-tools/pkg/cmd"
 )
 
 // version is the version of the application. It should be set at build time.

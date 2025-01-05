@@ -13,7 +13,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/ksysoev/mcp-code-tools/pkg/core"
+	"github.com/ksysoev/mcp-go-tools/pkg/core"
 	mcp "github.com/metoro-io/mcp-golang"
 	"github.com/metoro-io/mcp-golang/transport/stdio"
 	"golang.org/x/sync/errgroup"

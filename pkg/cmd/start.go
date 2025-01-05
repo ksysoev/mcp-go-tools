@@ -4,9 +4,9 @@ package cmd
 import (
 	"context"
 
-	"github.com/ksysoev/mcp-code-tools/pkg/api"
-	"github.com/ksysoev/mcp-code-tools/pkg/core"
-	"github.com/ksysoev/mcp-code-tools/pkg/repo/static"
+	"github.com/ksysoev/mcp-go-tools/pkg/api"
+	"github.com/ksysoev/mcp-go-tools/pkg/core"
+	"github.com/ksysoev/mcp-go-tools/pkg/repo/static"
 )
 
 // runStart initializes and runs the MCP code tools server with the provided configuration.
