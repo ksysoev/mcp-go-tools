@@ -706,7 +706,7 @@ z
           }
 
           // NewServer creates a new instance of the API server.
-          func NewServer(cfg Config, svc CoreService) *Server {
+          func New(cfg Config, svc CoreService) *Server {
             s := &Server{
               srv: &http.Server{
                 Addr:         cfg.Listen,
@@ -738,5 +738,51 @@ z
               s.srv.Shutdown(ctx)
               return nil
             }
+          }
+
+          func (s *Server) setupRoutes() {
+            http.HandleFunc("/check", s.handleCheck)
+          }
+
+          func (s *Server) handleCheck(w http.ResponseWriter, r *http.Request) {
+            if err := s.svc.HandleCheck(); err != nil {
+              http.Error(w, err.Error(), http.StatusInternalServerError)
+              return
+            }
+
+            w.WriteHeader(http.StatusOK)
+          }
+
+  - name: "Core Service"
+    category: "template"
+    description: "Business logic of the application, this is the heart of the application it should be located in ./pkg/core directory. logic should be independent of the driver and driven sides of the application"
+    examples:
+      - description: "Core service should be independent of the driver and driven sides of the application"
+        code: |
+          package core
+
+          import (
+            "context"
+            "fmt"
+          )
+
+          type UserRepo interface {
+            ChekStatus() error
+          }
+
+          type Service {
+            repo UserRepo
+          }
+          
+          func New(repo UserRepo) *Service {
+            return &Service{repo: repo}
+          }
+
+          func (s *Service) HandleCheck() error {
+            if err := s.repo.CheckStatus(); err != nil {
+              return fmt.Errorf("failed to check status: %w", err)
+            }
+
+            return nil
           }
 
