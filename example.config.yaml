@@ -674,9 +674,9 @@ z
 
             return nil
           }
-  - name: "API Server, Driver side of the application, "
+  - name: "API packag "
     category: "template"
-    description: "API server should be located in ./pkg/api directory"
+    description: "API server, driver side of the application, should be located in ./pkg/api directory"
     examples:
       - description: "For implementing HTTP API server we shouldu use http package from standard library. File should be located in ./pkg/api/server.go"
         code: |
@@ -753,7 +753,7 @@ z
             w.WriteHeader(http.StatusOK)
           }
 
-  - name: "Core Service"
+  - name: "Core package"
     category: "template"
     description: "Business logic of the application, this is the heart of the application it should be located in ./pkg/core directory. logic should be independent of the driver and driven sides of the application"
     examples:
@@ -783,6 +783,35 @@ z
               return fmt.Errorf("failed to check status: %w", err)
             }
 
+            return nil
+          }
+  - name: "Repository package"
+    category: "template"
+    description: "Repository layer should be located in ./pkg/repo directory, it should be responsible for managing data and internal state of the application"
+    examples:
+      - description: "Repository layer should be responsible for managing data and internal state of the application"
+        code: |
+          package core
+
+          import (
+            "context"
+            "fmt"
+          )
+
+          Config struct {
+            DSN string `mapstructure:"dsn"`
+          }
+
+          type Repo {
+            cfg Config
+          }
+          
+          func New(cfg Config) *Repo {
+            return &Repo{cfg: cfg}
+          }
+
+          func (r *Repo) CheckStatus() error {
+            // Check status logic
             return nil
           }
 
