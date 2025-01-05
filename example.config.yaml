@@ -102,6 +102,7 @@ rules:
               return p.Process()
           }
 
+z
 
       - description: "Accept interfaces, return structs"
         code: |
@@ -673,3 +674,69 @@ rules:
 
             return nil
           }
+  - name: "API Server, Driver side of the application, "
+    category: "template"
+    description: "API server should be located in ./pkg/api directory"
+    examples:
+      - description: "For implementing HTTP API server we shouldu use http package from standard library. File should be located in ./pkg/api/server.go"
+        code: |
+          package api
+
+          import (
+            "context"
+            "fmt"
+            "net/http"
+            "time"
+
+            "github.com/user/example/pkg/core"
+          )
+
+          type CoreService interface {
+            HandleCheck() error
+          }
+
+          type Config struct {
+            Listen string        `mapstructure:"listen"`
+          }
+
+          // Server represents the HTTP server for the API.
+          type Server struct {
+            srv *http.Server
+            svc CoreService
+          }
+
+          // NewServer creates a new instance of the API server.
+          func NewServer(cfg Config, svc CoreService) *Server {
+            s := &Server{
+              srv: &http.Server{
+                Addr:         cfg.Listen,
+                ReadTimeout:  5 * time.Second,
+                WriteTimeout: 10 * time.Second,
+              },
+              svc: svc,
+            }
+
+            return s
+          }
+
+          // Run starts the API server.
+          func (s *Server) Run(ctx context.Context) error {
+            s.setupRoutes()
+
+            errCh := make(chan error, 1)
+
+            go func() {
+              if err := s.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+                errCh <- fmt.Errorf("failed to start server: %w", err)
+              }
+            }()
+
+            select {
+            case err := <-errCh:
+              return err
+            case <-ctx.Done():
+              s.srv.Shutdown(ctx)
+              return nil
+            }
+          }
+
