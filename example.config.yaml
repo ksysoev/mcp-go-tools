@@ -102,8 +102,6 @@ rules:
               return p.Process()
           }
 
-z
-
       - description: "Accept interfaces, return structs"
         code: |
           // Good: Accept interface for flexibility, return concrete type
@@ -612,7 +610,8 @@ z
           // runServer starts the Example server.
           func runServer(ctx context.Context, cfg *Config) error {
             repo := repo.New(cfg.Database)
-            svc := core.New(repo)
+            prov := prov.New(cfg.Provider)
+            svc := core.New(repo, prov)
             api := api.New(cfg.Server, svc)
 
             srv := api.NewServer(cfg.Server, api)
@@ -793,17 +792,26 @@ z
             ChekStatus() error
           }
 
+          type SomeProv interface {
+            ChekStatus() error
+          }
+
           type Service {
             repo UserRepo
+            prov SomeProv
           }
           
-          func New(repo UserRepo) *Service {
-            return &Service{repo: repo}
+          func New(repo UserRepo, some SomeProv) *Service {
+            return &Service{repo: repo, prov: some}
           }
 
           func (s *Service) HandleCheck() error {
             if err := s.repo.CheckStatus(); err != nil {
-              return fmt.Errorf("failed to check status: %w", err)
+              return fmt.Errorf("failed to check status of repo: %w", err)
+            }
+
+            if err := s.repo.CheckStatus(); err != nil {
+              return fmt.Errorf("failed to check status of provider: %w", err)
             }
 
             return nil
