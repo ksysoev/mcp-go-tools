@@ -134,14 +134,14 @@ func TestRule_String(t *testing.T) {
 					},
 				},
 			},
-			want: "Rule: test_rule\nDescription: Test description\nCategory: testing\nExample (Example 1):\ntest code",
+			want: "Description: Test description\nExample (Example 1):\n```\ntest code```",
 		},
 		{
 			name: "minimal rule",
 			rule: Rule{
 				Name: "minimal_rule",
 			},
-			want: "Rule: minimal_rule",
+			want: "",
 		},
 		{
 			name: "rule with no examples",
@@ -150,7 +150,7 @@ func TestRule_String(t *testing.T) {
 				Category:    "testing",
 				Description: "No examples here",
 			},
-			want: "Rule: no_examples\nDescription: No examples here\nCategory: testing",
+			want: "Description: No examples here",
 		},
 	}
 

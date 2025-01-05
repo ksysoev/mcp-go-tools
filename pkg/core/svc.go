@@ -34,14 +34,8 @@ func (r *Rule) FormatForLLM() string {
 	var parts []string
 
 	// Always include name and description as they're essential
-	parts = append(parts, fmt.Sprintf("Rule: %s", r.Name))
 	if r.Description != "" {
 		parts = append(parts, fmt.Sprintf("Description: %s", r.Description))
-	}
-
-	// Include category if present
-	if r.Category != "" {
-		parts = append(parts, fmt.Sprintf("Category: %s", r.Category))
 	}
 
 	// Include examples if present
@@ -49,12 +43,11 @@ func (r *Rule) FormatForLLM() string {
 		examples := make([]string, 0, len(r.Examples))
 		for _, ex := range r.Examples {
 			if ex.Description != "" && ex.Code != "" {
-				examples = append(examples, fmt.Sprintf("Example (%s):\n%s", ex.Description, ex.Code))
+				examples = append(examples, fmt.Sprintf("Example (%s):\n```\n%s```", ex.Description, ex.Code))
 			}
 		}
-		if len(examples) > 0 {
-			parts = append(parts, strings.Join(examples, "\n"))
-		}
+
+		parts = append(parts, strings.Join(examples, "\n"))
 	}
 
 	return strings.Join(parts, "\n")
