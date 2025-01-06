@@ -136,7 +136,7 @@ The project is in active development with the following components:
 - ✅ MCP protocol integration
 - ✅ Idiomatic Go code generation
 - ✅ Go project templates
-- 🚧 Add integration with mockery
+- ✅ Mockery support
 - 🚧 Add integration linters
 
 ### Building from Source
