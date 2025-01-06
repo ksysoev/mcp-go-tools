@@ -173,9 +173,21 @@ Add the following configuration to the `mcpServers` object in the settings file:
 Custom instructions example:
 
 ```
-Use project template to initialize new applications for GoLang, it's available in MCP server code-tools `codestyle ` with category `template`
+Use project template to initialize new applications in GoLang, it's available in MCP server code-tools `codestyle ` with category `template`
 
-Every time you need to generate code use MCP server code-tools `codestyle ` with required category `code`, `documentation`, `testing`
+Every time you you need to generate code use MCP server code-tools to `codestyle ` for required category `code`, `documentation`, `testing`
+
+example of request to MCP server code-tool:
+{
+  "method": "tools/call",
+  "params": {
+    "name": "codestyle",
+    "arguments": {
+      "categories": "testing" #Comma separate list
+    },
+  }
+}
+
 ```
 
 
