@@ -26,32 +26,6 @@ rules:
               return result
           }
 
-      - description: "Errors are values"
-        code: |
-          // Bad: Using panic for error handling
-          func process(data []byte) {
-              if err := validate(data); err != nil {
-                  panic(err)
-              }
-          }
-
-          // Good: Treating errors as values
-          type Scanner struct {
-              err error
-              // ... other fields
-          }
-
-          func (s *Scanner) Scan() {
-              if s.err != nil {
-                  return
-              }
-              // ... scanning logic
-          }
-
-          func (s *Scanner) Err() error {
-              return s.err
-          }
-
       - description: "Make the zero value useful"
         code: |
           // Bad: Requiring explicit initialization
@@ -132,63 +106,6 @@ rules:
               return process(data)
           }
 
-  # Constructor pattern
-  - name: "constructor_pattern"
-    category: "code"
-    description: "Standard constructor pattern for Go types"
-    examples:
-      - description: "Basic constructor"
-        code: |
-          func NewUser(name string, age int) *User {
-              return &User{
-                  name: name,
-                  age: age,
-              }
-          }
-      - description: "Constructor with validation"
-        code: |
-          func NewConfig(serverAddr string, timeout time.Duration) (*Config, error) {
-              if serverAddr == "" {
-                  return nil, errors.New("server address is required")
-              }
-              return &Config{
-                  serverAddr: serverAddr,
-                  timeout:    timeout,
-              }, nil
-          }
-      - description: "Constructor with optional parameters"
-        code: |
-          type Option func(*Options)
-
-          func NewService(opts ...Option) *Service {
-              s := &Service{
-                  timeout: 30 * time.Second,
-              }
-              for _, opt := range opts {
-                  opt(s)
-              }
-              return s
-          }
-
-  # Interface naming pattern
-  - name: "interface_naming"
-    category: "code"
-    description: "Go interface naming conventions"
-    examples:
-      - description: "Single method interface, named after the method name"
-        code: |
-          type Reader interface {
-              Read(p []byte) (n int, err error)
-          }
-      - description: "Multi-method interface"
-        code: |
-          type UserService interface {
-              Create(ctx context.Context, user *User) error
-              Get(ctx context.Context, id string) (*User, error)
-              Update(ctx context.Context, user *User) error
-              Delete(ctx context.Context, id string) error
-          }
-
   # SOLID Principles
   - name: "single_responsibility_principle"
     category: "code"
@@ -258,35 +175,6 @@ rules:
               default:
                   return errors.New("unsupported payment type")
               }
-              return nil
-          }
-
-  - name: "liskov_substitution_principle"
-    category: "code"
-    description: "Subtypes must be substitutable for their base types"
-    examples:
-      - description: "Good: Maintaining contract in interface implementation"
-        code: |
-          type Storage interface {
-              Save(ctx context.Context, data []byte) error
-              Load(ctx context.Context, id string) ([]byte, error)
-          }
-
-          type FileStorage struct {
-              basePath string
-          }
-
-          func (fs *FileStorage) Save(ctx context.Context, data []byte) error {
-              // Implements full Storage interface contract
-              return nil
-          }
-
-          type MemoryStorage struct {
-              data map[string][]byte
-          }
-
-          func (ms *MemoryStorage) Save(ctx context.Context, data []byte) error {
-              // Implements same contract as FileStorage
               return nil
           }
 
