@@ -331,6 +331,17 @@ rules:
           }
 
   # Table-driven tests
+  - name: "testify"
+    category: "testing"
+    description: "All tests should be written using the testify package for assertions"
+    examples:
+      - description: "Basic table test"
+        code: |
+          func TestValidate_Success(t *testing.T) {
+              input := "test"
+              err := Validate(input)
+              assert.NoError(t, err)
+          }
   - name: "table_tests"
     category: "testing"
     description: "Table-driven test patterns for Go"
@@ -383,6 +394,19 @@ rules:
               err := service.Create(context.Background(), &User{})
               assert.NoError(t, err)
           }
+      - description: "mockery should be configured in the .mockery.yaml file"
+        code: |
+          with-expecter: true
+          mock-build-tags: "!compile"
+          inpackage: true
+          filename: "{{.InterfaceName | snakecase }}_mock.go"
+          dir: "{{.InterfaceDir}}"
+          mockname: "Mock{{.InterfaceName}}"
+          packages:
+            github.com/user/myservice/pkg/core:
+              interfaces:
+                - ExampleInterface
+
 
   # Application template
   - name: "Excecutable files"
