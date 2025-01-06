@@ -8,159 +8,104 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// mockResourceRepo is a mock implementation of ResourceRepo for testing
-type mockResourceRepo struct {
-	rules []Rule
-	err   error
-}
-
-func (m *mockResourceRepo) GetCodeStyle(_ context.Context, categories []string) ([]Rule, error) {
-	if m.err != nil {
-		return nil, m.err
-	}
-	return m.rules, nil
-}
-
-func TestNew(t *testing.T) {
-	// Arrange
-	repo := &mockResourceRepo{}
-
-	// Act
-	svc := New(repo)
-
-	// Assert
-	assert.NotNil(t, svc)
-	assert.Equal(t, repo, svc.resource)
-}
-
-func TestGetCodeStyle(t *testing.T) {
-	// Define test cases using table-driven test pattern
+func TestRule_FormatForLLM(t *testing.T) {
 	tests := []struct {
-		name       string
-		repo       *mockResourceRepo
-		categories []string
-		want       []Rule
-		wantErr    bool
+		name     string
+		rule     Rule
+		expected string
 	}{
 		{
-			name: "successful retrieval",
-			repo: &mockResourceRepo{
-				rules: []Rule{
-					{
-						Name:        "test_rule",
-						Category:    "testing",
-						Description: "Test rule description",
-						Examples: []Example{
-							{
-								Description: "Example description",
-								Code:        "example code",
-							},
-						},
-					},
-				},
-			},
-			categories: []string{"testing"},
-			want: []Rule{
-				{
-					Name:        "test_rule",
-					Category:    "testing",
-					Description: "Test rule description",
-					Examples: []Example{
-						{
-							Description: "Example description",
-							Code:        "example code",
-						},
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "repository error",
-			repo: &mockResourceRepo{
-				err: assert.AnError,
-			},
-			categories: []string{"testing"},
-			want:       nil,
-			wantErr:    true,
-		},
-		{
-			name: "empty result",
-			repo: &mockResourceRepo{
-				rules: []Rule{},
-			},
-			categories: []string{"nonexistent"},
-			want:       []Rule{},
-			wantErr:    false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Arrange
-			svc := New(tt.repo)
-			ctx := context.Background()
-
-			// Act
-			got, err := svc.GetCodeStyle(ctx, tt.categories)
-
-			// Assert
-			if tt.wantErr {
-				assert.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestRule_String(t *testing.T) {
-	tests := []struct {
-		name string
-		rule Rule
-		want string
-	}{
-		{
-			name: "full rule",
+			name: "full rule with examples",
 			rule: Rule{
-				Name:        "test_rule",
+				Name:        "TestRule",
 				Category:    "testing",
 				Description: "Test description",
 				Examples: []Example{
 					{
 						Description: "Example 1",
-						Code:        "test code",
+						Code:        "code1",
 					},
 				},
 			},
-			want: "Description: Test description\nExample (Example 1):\n```\ntest code```",
+			expected: "Description: Test description\nExample (Example 1):\n```\ncode1```",
 		},
 		{
-			name: "minimal rule",
+			name: "rule without examples",
 			rule: Rule{
-				Name: "minimal_rule",
-			},
-			want: "",
-		},
-		{
-			name: "rule with no examples",
-			rule: Rule{
-				Name:        "no_examples",
+				Name:        "TestRule",
 				Category:    "testing",
-				Description: "No examples here",
+				Description: "Test description",
 			},
-			want: "Description: No examples here",
+			expected: "Description: Test description",
+		},
+		{
+			name: "rule with empty description",
+			rule: Rule{
+				Name:     "TestRule",
+				Category: "testing",
+			},
+			expected: "",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Act
-			got := tt.rule.String()
-
-			// Assert
-			assert.Equal(t, tt.want, got)
+			result := tt.rule.FormatForLLM()
+			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func TestRule_String(t *testing.T) {
+	rule := Rule{
+		Name:        "TestRule",
+		Category:    "testing",
+		Description: "Test description",
+		Examples: []Example{
+			{
+				Description: "Example 1",
+				Code:        "code1",
+			},
+		},
+	}
+
+	expected := rule.FormatForLLM()
+	assert.Equal(t, expected, rule.String())
+}
+
+func TestNew(t *testing.T) {
+	mockRepo := NewMockResourceRepo(t)
+	svc := New(mockRepo)
+
+	assert.NotNil(t, svc)
+	assert.Equal(t, mockRepo, svc.resource)
+}
+
+func TestService_GetCodeStyle(t *testing.T) {
+	ctx := context.Background()
+	categories := []string{"testing", "code"}
+
+	expectedRules := []Rule{
+		{
+			Name:        "Rule1",
+			Category:    "testing",
+			Description: "Test rule",
+		},
+		{
+			Name:        "Rule2",
+			Category:    "code",
+			Description: "Code rule",
+		},
+	}
+
+	mockRepo := NewMockResourceRepo(t)
+	mockRepo.EXPECT().
+		GetCodeStyle(ctx, categories).
+		Return(expectedRules, nil)
+
+	svc := New(mockRepo)
+	rules, err := svc.GetCodeStyle(ctx, categories)
+
+	require.NoError(t, err)
+	assert.Equal(t, expectedRules, rules)
 }

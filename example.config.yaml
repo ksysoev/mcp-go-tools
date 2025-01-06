@@ -405,7 +405,7 @@ rules:
           packages:
             github.com/user/myservice/pkg/core:
               interfaces:
-                - ExampleInterface
+                ExampleInterface:
 
 
   # Application template
