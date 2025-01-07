@@ -118,38 +118,41 @@ type CodeStyleArgs struct {
 // Each tool is registered with debug logging and proper error handling.
 // Returns error if any tool registration fails.
 func (s *Service) setupTools(server *mcp.Server) error {
-	// Register get rules by category tool
-	err := server.RegisterTool("codestyle", codeStyleDescription, func(args CodeStyleArgs) (*mcp.ToolResponse, error) {
-		slog.Debug("handling get_code_guidelines request", "categories", args.Categories)
-
-		// Split categories by comma
-		categories := strings.Split(args.Categories, ",")
-		for i, cat := range categories {
-			categories[i] = strings.TrimSpace(cat)
-		}
-
-		rules, err := s.handler.GetCodeStyle(context.Background(), categories)
-		if err != nil {
-			slog.Debug("get_rules_by_category failed", "error", err)
-			return nil, fmt.Errorf("get rules by category: %w", err)
-		}
-
-		slog.Debug("get_rules_by_category completed", "rules_count", len(rules))
-
-		// Format rules in an LLM-friendly way
-		var formattedRules []string
-		for _, rule := range rules {
-			// Include both the rule format and its LLM-friendly representation
-			formattedRules = append(formattedRules,
-				rule.FormatForLLM(),
-				"---") // Separator between rules
-		}
-
-		return mcp.NewToolResponse(mcp.NewTextContent(strings.Join(formattedRules, "\n"))), nil
-	})
+	err := server.RegisterTool("codestyle", codeStyleDescription, s.handleCodeStyle)
 	if err != nil {
 		return fmt.Errorf("register get rules by category tool: %w", err)
 	}
 
 	return nil
+}
+
+// handleCodeStyle processes the codestyle tool request.
+// It retrieves and formats code style rules based on the provided categories.
+func (s *Service) handleCodeStyle(args CodeStyleArgs) (*mcp.ToolResponse, error) {
+	slog.Debug("handling get_code_guidelines request", "categories", args.Categories)
+
+	// Split categories by comma
+	categories := strings.Split(args.Categories, ",")
+	for i, cat := range categories {
+		categories[i] = strings.TrimSpace(cat)
+	}
+
+	rules, err := s.handler.GetCodeStyle(context.Background(), categories)
+	if err != nil {
+		slog.Debug("get_rules_by_category failed", "error", err)
+		return nil, fmt.Errorf("get rules by category: %w", err)
+	}
+
+	slog.Debug("get_rules_by_category completed", "rules_count", len(rules))
+
+	// Format rules in an LLM-friendly way
+	formattedRules := make([]string, 0, len(rules)*2) // Pre-allocate for rule and separator
+	for _, rule := range rules {
+		// Include both the rule format and its LLM-friendly representation
+		formattedRules = append(formattedRules,
+			rule.FormatForLLM(),
+			"---") // Separator between rules
+	}
+
+	return mcp.NewToolResponse(mcp.NewTextContent(strings.Join(formattedRules, "\n"))), nil
 }

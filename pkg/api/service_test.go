@@ -89,6 +89,7 @@ func TestService_setupTools(t *testing.T) {
 			// Assert
 			if tt.wantErr {
 				assert.Error(t, err)
+
 				return
 			}
 
@@ -156,6 +157,104 @@ func TestService_Run(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestService_handleCodeStyle(t *testing.T) {
+	tests := []struct {
+		name      string
+		handler   *mockToolHandler
+		args      CodeStyleArgs
+		wantErr   bool
+		wantRules bool
+		ruleCount int
+	}{
+		{
+			name: "successful handling",
+			handler: &mockToolHandler{
+				rules: []core.Rule{
+					{
+						Name:        "test_rule",
+						Category:    "testing",
+						Description: "Test rule",
+						Examples: []core.Example{
+							{
+								Description: "Example",
+								Code:        "test code",
+							},
+						},
+					},
+				},
+			},
+			args: CodeStyleArgs{
+				Categories: "testing",
+			},
+			wantErr:   false,
+			wantRules: true,
+			ruleCount: 1,
+		},
+		{
+			name: "handler error",
+			handler: &mockToolHandler{
+				err: assert.AnError,
+			},
+			args: CodeStyleArgs{
+				Categories: "testing",
+			},
+			wantErr:   true,
+			wantRules: false,
+		},
+		{
+			name: "empty rules",
+			handler: &mockToolHandler{
+				rules: []core.Rule{},
+			},
+			args: CodeStyleArgs{
+				Categories: "testing",
+			},
+			wantErr:   false,
+			wantRules: true,
+			ruleCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Arrange
+			svc := New(&Config{}, tt.handler)
+
+			// Act
+			resp, err := svc.handleCodeStyle(tt.args)
+
+			// Assert
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Nil(t, resp)
+
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			if tt.wantRules {
+				require.NotNil(t, resp.Content)
+				require.Len(t, resp.Content, 1)
+				require.NotNil(t, resp.Content[0])
+
+				content := resp.Content[0].TextContent
+				require.NotNil(t, content)
+
+				if tt.ruleCount > 0 {
+					assert.Contains(t, content.Text, "test code")
+					assert.Contains(t, content.Text, "Test rule")
+					assert.Contains(t, content.Text, "---") // Check separator
+				} else {
+					// Even with empty rules, we should get an empty string
+					assert.Equal(t, "", content.Text)
+				}
+			}
 		})
 	}
 }
