@@ -194,7 +194,7 @@ example of request to MCP server code-tool:
   }
 }
 
-Before finishing task you should run  you should run `golangci-lint` and recursively address all issue until all issues are addressed
+Before finishing task you should run `golangci-lint` and recursively address issues until all issues are fixed
 
 to fix field alignment issues you should use `fieldalignment -fix ./...`
 ```
