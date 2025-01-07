@@ -1,5 +1,11 @@
 # MCP GO Tools
 
+[![Tests](https://github.com/ksysoev/mcp-go-tools/actions/workflows/main.yml/badge.svg)](https://github.com/ksysoev/mcp-go-tools/actions/workflows/main.yml)
+[![CodeQL](https://github.com/ksysoev/mcp-go-tools/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/ksysoev/mcp-go-tools/actions/workflows/github-code-scanning/codeql)
+[![codecov](https://codecov.io/gh/ksysoev/mcp-go-tools/graph/badge.svg?token=2PQTPYTOT7)](https://codecov.io/gh/ksysoev/mcp-go-tools)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ksysoev/mcp-go-tools)](https://goreportcard.com/report/github.com/ksysoev/mcp-go-tools)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 A Go-focused Model Context Protocol (MCP) server that provides idiomatic Go code generation, style guidelines, and best practices. This tool helps Language Models understand and generate high-quality Go code following established patterns and conventions.
 
 > **Note**: This project is under active development. The following features are currently being implemented:
@@ -41,7 +47,7 @@ go install github.com/ksysoev/mcp-go-tools/cmd/mcp-go-tools@latest
 ### Basic Command Structure
 
 ```bash
-mcp [command] [flags]
+mcp-go-tools [command] [flags]
 ```
 
 For detailed usage examples and patterns, see [USAGE.md](USAGE.md).
@@ -51,17 +57,17 @@ For detailed usage examples and patterns, see [USAGE.md](USAGE.md).
 #### Start Server
 Starts the MCP server with the specified configuration:
 ```bash
-mcp start --config config.yaml
+mcp-go-tools start --config config.yaml
 ```
 
 #### Run with File Logging
 Run the server with logs written to a file instead of stdout:
 ```bash
 # JSON format (default)
-mcp start --config config.yaml --log-file=server.log
+mcp-go-tools start --config config.yaml --log-file=server.log
 
 # Text format with debug level for request tracking
-mcp start --config config.yaml --log-file=server.log --log-text --log-level=debug
+mcp-go-tools start --config config.yaml --log-file=server.log --log-text --log-level=debug
 ```
 
 Note: When --log-file is provided, logs will be written only to the specified file, not to stdout.
@@ -110,7 +116,7 @@ The tool supports configuration via a JSON/YAML file. Specify the config file pa
 ```
 .
 ├── cmd/
-│   └── mcp/              # Main application entry point
+│   └── mcp-go-tools/              # Main application entry point
 ├── pkg/
 │   ├── api/             # API service implementation
 │   ├── cmd/             # Command implementations
