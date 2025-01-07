@@ -18,7 +18,7 @@ api: {
 `
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.yaml")
-	err := os.WriteFile(configPath, []byte(configContent), 0644)
+	err := os.WriteFile(configPath, []byte(configContent), 0o600)
 	require.NoError(t, err)
 
 	// Test config loading with invalid content
@@ -37,8 +37,8 @@ func TestInitConfigWithDifferentFileTypes(t *testing.T) {
 		name         string
 		fileContent  string
 		fileExt      string
-		wantError    bool
 		errorMessage string
+		wantError    bool
 	}{
 		{
 			name: "valid yaml",
@@ -80,7 +80,7 @@ rules:
 		t.Run(tt.name, func(t *testing.T) {
 			tmpDir := t.TempDir()
 			configPath := filepath.Join(tmpDir, "config"+tt.fileExt)
-			err := os.WriteFile(configPath, []byte(tt.fileContent), 0644)
+			err := os.WriteFile(configPath, []byte(tt.fileContent), 0o600)
 			require.NoError(t, err)
 
 			args := &args{
@@ -88,12 +88,16 @@ rules:
 			}
 
 			cfg, err := initConfig(args)
+
 			if tt.wantError {
 				assert.Error(t, err)
+
 				if tt.errorMessage != "" {
 					assert.Contains(t, err.Error(), tt.errorMessage)
 				}
+
 				assert.Nil(t, cfg)
+
 				return
 			}
 

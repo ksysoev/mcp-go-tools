@@ -22,7 +22,7 @@ func runStart(ctx context.Context, cfg *Config) error {
 
 	toolHandler := core.New(staticRepo)
 
-	mcpApi := api.New(&cfg.API, toolHandler)
+	mcpAPI := api.New(&cfg.API, toolHandler)
 
-	return mcpApi.Run(ctx)
+	return mcpAPI.Run(ctx)
 }

@@ -11,8 +11,8 @@ import (
 func TestRule_FormatForLLM(t *testing.T) {
 	tests := []struct {
 		name     string
-		rule     Rule
 		expected string
+		rule     Rule
 	}{
 		{
 			name: "full rule with examples",

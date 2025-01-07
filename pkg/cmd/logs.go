@@ -25,7 +25,9 @@ import (
 // Returns error if log level is invalid or file access fails.
 func initLogger(arg *args) error {
 	var logLevel slog.Level
-	if err := logLevel.UnmarshalText([]byte(arg.LogLevel)); err != nil {
+	err := logLevel.UnmarshalText([]byte(arg.LogLevel))
+
+	if err != nil {
 		return fmt.Errorf("invalid log level: %w", err)
 	}
 
@@ -34,10 +36,12 @@ func initLogger(arg *args) error {
 	}
 
 	// Set up writer based on logfile flag
-	var writer io.Writer = io.Discard
+	var writer = io.Discard
+
+	// Open log file if specified
 	if arg.LogFile != "" {
-		var err error
-		writer, err = os.OpenFile(arg.LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
+		writer, err = os.OpenFile(arg.LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
+
 		if err != nil {
 			return fmt.Errorf("failed to open log file: %w", err)
 		}

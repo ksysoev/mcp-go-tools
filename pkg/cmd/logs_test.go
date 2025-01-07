@@ -12,15 +12,16 @@ import (
 
 func TestLoggerFileHandling(t *testing.T) {
 	tests := []struct {
-		name      string
 		setupFile func(t *testing.T) string
+		name      string
 		wantError bool
 	}{
 		{
 			name: "append to existing file",
 			setupFile: func(t *testing.T) string {
+				t.Helper()
 				file := filepath.Join(t.TempDir(), "existing.log")
-				err := os.WriteFile(file, []byte("existing content\n"), 0o666)
+				err := os.WriteFile(file, []byte("existing content\n"), 0o600)
 				require.NoError(t, err)
 				return file
 			},
@@ -29,6 +30,7 @@ func TestLoggerFileHandling(t *testing.T) {
 		{
 			name: "invalid path",
 			setupFile: func(t *testing.T) string {
+				t.Helper()
 				return filepath.Join(t.TempDir(), "subdir", "test.log")
 			},
 			wantError: true,
@@ -36,8 +38,9 @@ func TestLoggerFileHandling(t *testing.T) {
 		{
 			name: "invalid permissions",
 			setupFile: func(t *testing.T) string {
+				t.Helper()
 				dir := filepath.Join(t.TempDir(), "readonly")
-				err := os.Mkdir(dir, 0500) // Read-only directory
+				err := os.Mkdir(dir, 0o500) // Read-only directory
 				require.NoError(t, err)
 				return filepath.Join(dir, "test.log")
 			},
@@ -62,6 +65,7 @@ func TestLoggerFileHandling(t *testing.T) {
 				assert.Error(t, err)
 				return
 			}
+
 			require.NoError(t, err)
 
 			// Verify file exists

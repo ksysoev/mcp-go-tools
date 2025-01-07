@@ -12,9 +12,9 @@ import (
 
 func TestStartServerWithError(t *testing.T) {
 	tests := []struct {
-		name      string
-		config    *Config
 		runErr    error
+		config    *Config
+		name      string
 		wantError bool
 	}{
 		{
@@ -55,15 +55,18 @@ func TestStartServerWithError(t *testing.T) {
 
 			// Wait for either error or timeout
 			err := <-errCh
+
 			if tt.wantError {
 				assert.Error(t, err)
+
 				if tt.runErr != nil {
 					assert.ErrorIs(t, err, tt.runErr)
 				}
-			} else {
-				assert.ErrorIs(t, err, context.DeadlineExceeded)
+
+				return
 			}
 
+			assert.ErrorIs(t, err, context.DeadlineExceeded)
 		})
 	}
 }

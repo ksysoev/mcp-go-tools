@@ -65,12 +65,14 @@ func (r *Repository) convertRule(rule Rule) core.Rule {
 // and domain representations of examples.
 func convertExamples(examples []Example) []core.Example {
 	result := make([]core.Example, len(examples))
+
 	for i, e := range examples {
 		result[i] = core.Example{
 			Description: e.Description,
 			Code:        e.Code,
 		}
 	}
+
 	return result
 }
 
@@ -96,6 +98,7 @@ func (r *Repository) GetCodeStyle(ctx context.Context, categories []string) ([]c
 				rules = append(rules, r.convertRule(rule))
 			}
 		}
+
 		return rules, nil
 	}
 }

@@ -14,8 +14,8 @@ type args struct {
 	version    string
 	LogLevel   string
 	ConfigPath string
-	TextFormat bool
 	LogFile    string
+	TextFormat bool
 }
 
 // InitCommands initializes and returns the root command for the MCP code tools server.

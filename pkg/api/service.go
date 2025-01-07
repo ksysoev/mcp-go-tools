@@ -7,7 +7,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -113,17 +112,6 @@ func (s *Service) Run(ctx context.Context) error {
 type CodeStyleArgs struct {
 	// Categories for filtering rules
 	Categories string `json:"categories" jsonschema:"required,description=The categories for filtering code generation rules. Comma-separated list of: 'documentation', 'testing', 'code'"`
-}
-
-// mustMarshal marshals the value to JSON and panics on error.
-// This is an internal helper used for response formatting where JSON
-// marshaling errors indicate a programming error rather than runtime condition.
-func mustMarshal(v interface{}) []byte {
-	data, err := json.Marshal(v)
-	if err != nil {
-		panic(fmt.Sprintf("failed to marshal JSON: %v", err))
-	}
-	return data
 }
 
 // setupTools registers all available tools with the MCP server.

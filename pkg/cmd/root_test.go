@@ -40,6 +40,7 @@ func TestInitCommands(t *testing.T) {
 				assert.Error(t, err)
 				return
 			}
+
 			require.NoError(t, err)
 			assert.NotNil(t, cmd)
 
@@ -93,12 +94,12 @@ rules:
 `
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.yaml")
-	err := os.WriteFile(configPath, []byte(configContent), 0644)
+	err := os.WriteFile(configPath, []byte(configContent), 0o600)
 	require.NoError(t, err)
 
 	// Create a test log file directory
 	logDir := filepath.Join(tmpDir, "logs")
-	err = os.MkdirAll(logDir, 0755)
+	err = os.MkdirAll(logDir, 0o755)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -156,6 +157,7 @@ rules:
 				assert.Error(t, err)
 				return
 			}
+
 			assert.NoError(t, err)
 
 			// Verify log file was created if specified
@@ -204,6 +206,7 @@ func TestVersionString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cmd, err := InitCommands(tt.build, tt.version)
 			require.NoError(t, err)
+
 			assert.Equal(t, tt.wantVersion, cmd.Version)
 		})
 	}

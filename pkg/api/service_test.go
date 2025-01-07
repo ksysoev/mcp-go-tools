@@ -16,14 +16,15 @@ import (
 
 // mockToolHandler is a mock implementation of ToolHandler for testing
 type mockToolHandler struct {
-	rules []core.Rule
 	err   error
+	rules []core.Rule
 }
 
 func (m *mockToolHandler) GetCodeStyle(_ context.Context, _ []string) ([]core.Rule, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
+
 	return m.rules, nil
 }
 
@@ -44,8 +45,8 @@ func TestNew(t *testing.T) {
 func TestService_setupTools(t *testing.T) {
 	// This test verifies that the codestyle tool is properly registered
 	tests := []struct {
-		name    string
 		handler *mockToolHandler
+		name    string
 		wantErr bool
 	}{
 		{
@@ -90,6 +91,7 @@ func TestService_setupTools(t *testing.T) {
 				assert.Error(t, err)
 				return
 			}
+
 			require.NoError(t, err)
 		})
 	}
@@ -97,8 +99,8 @@ func TestService_setupTools(t *testing.T) {
 
 func TestService_Run(t *testing.T) {
 	tests := []struct {
-		name    string
 		handler *mockToolHandler
+		name    string
 		wantErr bool
 	}{
 		{
@@ -134,13 +136,14 @@ func TestService_Run(t *testing.T) {
 			// Arrange
 			svc := New(&Config{}, tt.handler)
 			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
 
 			// Act
 			errCh := make(chan error)
 			go func() {
 				errCh <- svc.Run(ctx)
 			}()
+
+			defer cancel()
 
 			// Cancel context after a short delay to stop the service
 			cancel()
@@ -151,6 +154,7 @@ func TestService_Run(t *testing.T) {
 				assert.Error(t, err)
 				return
 			}
+
 			assert.NoError(t, err)
 		})
 	}
@@ -202,6 +206,7 @@ func TestCodeStyleArgs_Validation(t *testing.T) {
 				assert.Error(t, err)
 				return
 			}
+
 			assert.NoError(t, err)
 		})
 	}

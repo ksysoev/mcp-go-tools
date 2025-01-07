@@ -74,6 +74,7 @@ func TestGetCodeStyle(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var rules []core.Rule
 			rules, err := svc.GetCodeStyle(ctx, tt.categories)
+
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
@@ -84,12 +85,14 @@ func TestGetCodeStyle(t *testing.T) {
 
 			for _, rule := range rules {
 				found := false
+
 				for _, cat := range tt.categories {
 					if rule.Category == cat {
 						found = true
 						break
 					}
 				}
+
 				if !found {
 					t.Errorf("Rule category %s not in expected categories %v", rule.Category, tt.categories)
 				}

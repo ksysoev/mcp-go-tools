@@ -41,6 +41,7 @@ func (r *Rule) FormatForLLM() string {
 	// Include examples if present
 	if len(r.Examples) > 0 {
 		examples := make([]string, 0, len(r.Examples))
+
 		for _, ex := range r.Examples {
 			if ex.Description != "" && ex.Code != "" {
 				examples = append(examples, fmt.Sprintf("Example (%s):\n```\n%s```", ex.Description, ex.Code))
