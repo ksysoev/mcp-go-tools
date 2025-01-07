@@ -8,3 +8,6 @@ packages:
   github.com/ksysoev/mcp-go-tools/pkg/core:
     interfaces:
       ResourceRepo: {}
+  github.com/ksysoev/mcp-go-tools/pkg/api:
+    interfaces:
+      ToolHandler: {}
