@@ -11,27 +11,14 @@ import (
 	mcp "github.com/metoro-io/mcp-golang"
 	"github.com/metoro-io/mcp-golang/transport/stdio"
 	"github.com/stretchr/testify/assert"
+	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
-// mockToolHandler is a mock implementation of ToolHandler for testing
-type mockToolHandler struct {
-	err   error
-	rules []core.Rule
-}
-
-func (m *mockToolHandler) GetCodeStyle(_ context.Context, _ []string) ([]core.Rule, error) {
-	if m.err != nil {
-		return nil, m.err
-	}
-
-	return m.rules, nil
-}
 
 func TestNew(t *testing.T) {
 	// Arrange
 	cfg := &Config{}
-	handler := &mockToolHandler{}
+	handler := NewMockToolHandler(t)
 
 	// Act
 	svc := New(cfg, handler)
@@ -45,34 +32,18 @@ func TestNew(t *testing.T) {
 func TestService_setupTools(t *testing.T) {
 	// This test verifies that the codestyle tool is properly registered
 	tests := []struct {
-		handler *mockToolHandler
+		handler *MockToolHandler
 		name    string
 		wantErr bool
 	}{
 		{
-			name: "successful registration",
-			handler: &mockToolHandler{
-				rules: []core.Rule{
-					{
-						Name:        "test_rule",
-						Category:    "testing",
-						Description: "Test rule",
-						Examples: []core.Example{
-							{
-								Description: "Example",
-								Code:        "test code",
-							},
-						},
-					},
-				},
-			},
+			name:    "successful registration",
+			handler: NewMockToolHandler(t),
 			wantErr: false,
 		},
 		{
-			name: "handler error",
-			handler: &mockToolHandler{
-				err: assert.AnError,
-			},
+			name:    "handler error",
+			handler: NewMockToolHandler(t),
 			wantErr: false, // Registration should succeed even if handler has errors
 		},
 	}
@@ -100,34 +71,18 @@ func TestService_setupTools(t *testing.T) {
 
 func TestService_Run(t *testing.T) {
 	tests := []struct {
-		handler *mockToolHandler
+		handler *MockToolHandler
 		name    string
 		wantErr bool
 	}{
 		{
-			name: "successful run",
-			handler: &mockToolHandler{
-				rules: []core.Rule{
-					{
-						Name:        "test_rule",
-						Category:    "testing",
-						Description: "Test rule",
-						Examples: []core.Example{
-							{
-								Description: "Example",
-								Code:        "test code",
-							},
-						},
-					},
-				},
-			},
+			name:    "successful run",
+			handler: NewMockToolHandler(t),
 			wantErr: false,
 		},
 		{
-			name: "handler error",
-			handler: &mockToolHandler{
-				err: assert.AnError,
-			},
+			name:    "handler error",
+			handler: NewMockToolHandler(t),
 			wantErr: false, // Service should start even if handler has errors
 		},
 	}
@@ -164,7 +119,7 @@ func TestService_Run(t *testing.T) {
 func TestService_handleCodeStyle(t *testing.T) {
 	tests := []struct {
 		name      string
-		handler   *mockToolHandler
+		handler   *MockToolHandler
 		args      CodeStyleArgs
 		wantErr   bool
 		wantRules bool
@@ -172,8 +127,9 @@ func TestService_handleCodeStyle(t *testing.T) {
 	}{
 		{
 			name: "successful handling",
-			handler: &mockToolHandler{
-				rules: []core.Rule{
+			handler: func() *MockToolHandler {
+				m := NewMockToolHandler(t)
+				m.EXPECT().GetCodeStyle(mock.Anything, []string{"testing"}).Return([]core.Rule{
 					{
 						Name:        "test_rule",
 						Category:    "testing",
@@ -185,8 +141,9 @@ func TestService_handleCodeStyle(t *testing.T) {
 							},
 						},
 					},
-				},
-			},
+				}, nil)
+				return m
+			}(),
 			args: CodeStyleArgs{
 				Categories: "testing",
 			},
@@ -196,9 +153,11 @@ func TestService_handleCodeStyle(t *testing.T) {
 		},
 		{
 			name: "handler error",
-			handler: &mockToolHandler{
-				err: assert.AnError,
-			},
+			handler: func() *MockToolHandler {
+				m := NewMockToolHandler(t)
+				m.EXPECT().GetCodeStyle(mock.Anything, []string{"testing"}).Return(nil, assert.AnError)
+				return m
+			}(),
 			args: CodeStyleArgs{
 				Categories: "testing",
 			},
@@ -207,9 +166,11 @@ func TestService_handleCodeStyle(t *testing.T) {
 		},
 		{
 			name: "empty rules",
-			handler: &mockToolHandler{
-				rules: []core.Rule{},
-			},
+			handler: func() *MockToolHandler {
+				m := NewMockToolHandler(t)
+				m.EXPECT().GetCodeStyle(mock.Anything, []string{"testing"}).Return([]core.Rule{}, nil)
+				return m
+			}(),
 			args: CodeStyleArgs{
 				Categories: "testing",
 			},
