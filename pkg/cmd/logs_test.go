@@ -66,9 +66,11 @@ func TestInitLogger(t *testing.T) {
 
 			if tt.wantError {
 				assert.Error(t, err)
+
 				if tt.errMsg != "" {
 					assert.Contains(t, err.Error(), tt.errMsg)
 				}
+
 				return
 			}
 
