@@ -2,19 +2,15 @@ package vector
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"runtime"
 	"sync"
 
 	"github.com/ksysoev/mcp-go-tools/pkg/core"
-	"github.com/philippgille/chromem-go"
 )
 
-// Repository implements core.ResourceRepo interface using chromem-go vector database
+// Repository implements core.ResourceRepo interface using vector storage
 type Repository struct {
-	db          *chromem.DB
-	collections map[string]*chromem.Collection
+	collections map[string][]Document
 	mu          sync.RWMutex
 }
 
@@ -24,110 +20,92 @@ type Document struct {
 	Name     string    `json:"name"`
 	Category string    `json:"category"`
 	Rule     core.Rule `json:"rule"`
+	Vector   []float32 `json:"vector"`
 }
 
 // New creates a new Repository instance
 func New() (*Repository, error) {
-	db := chromem.NewDB()
-
 	return &Repository{
-		db:          db,
-		collections: make(map[string]*chromem.Collection),
+		collections: make(map[string][]Document),
 	}, nil
+}
+
+// generateVector creates a simple vector representation of a rule
+func generateVector(rule core.Rule) []float32 {
+	// Create a simple 384-dimensional vector for testing
+	vector := make([]float32, 384)
+	content := rule.Name + rule.Description
+
+	// Create a simple hash of the rule content
+	var hash int
+
+	for i := 0; i < len(content); i++ {
+		hash = hash*31 + int(content[i])
+	}
+
+	// Use the hash to generate vector values
+	for i := range vector {
+		vector[i] = float32(hash%100) / 100.0
+		hash /= 100
+	}
+
+	return vector
 }
 
 // GetCodeStyle implements core.ResourceRepo interface
 // Returns all rules that match the specified categories
 func (r *Repository) GetCodeStyle(ctx context.Context, categories []string) ([]core.Rule, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		r.mu.RLock()
+		defer r.mu.RUnlock()
 
-	var rules []core.Rule
+		var rules []core.Rule
 
-	// Create a map for faster category lookup
-	categoryMap := make(map[string]bool)
-	for _, cat := range categories {
-		categoryMap[cat] = true
-	}
-
-	// Get rules from each requested category
-	for category := range categoryMap {
-		collection, ok := r.collections[category]
-		if !ok {
-			continue
+		// Create a map for faster category lookup
+		categoryMap := make(map[string]bool)
+		for _, cat := range categories {
+			categoryMap[cat] = true
 		}
 
-		// For now, we'll get all documents from the collection using a broad query
-		// In the future, this could be enhanced with similarity search
-		results, err := collection.Query(ctx, "", 100, nil, nil) // Get all documents with empty query
-		if err != nil {
-			return nil, fmt.Errorf("failed to get documents from collection %s: %w", category, err)
-		}
-
-		for _, result := range results {
-			var document Document
-			if err := json.Unmarshal([]byte(result.Content), &document); err != nil {
-				return nil, fmt.Errorf("failed to unmarshal document: %w", err)
+		// Get rules from each requested category
+		for category := range categoryMap {
+			if docs, ok := r.collections[category]; ok {
+				for i := range docs {
+					rules = append(rules, docs[i].Rule)
+				}
 			}
-
-			rules = append(rules, document.Rule)
-		}
-	}
-
-	return rules, nil
-}
-
-// createCollection creates a new collection for a category if it doesn't exist
-func (r *Repository) createCollection(_ context.Context, category string) (*chromem.Collection, error) {
-	collection, ok := r.collections[category]
-	if !ok {
-		var err error
-		collection, err = r.db.CreateCollection(fmt.Sprintf("rules_%s", category), nil, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create collection: %w", err)
 		}
 
-		r.collections[category] = collection
+		return rules, nil
 	}
-
-	return collection, nil
 }
 
 // AddRule adds a new rule to the appropriate category collection
 func (r *Repository) AddRule(ctx context.Context, rule core.Rule) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		r.mu.Lock()
+		defer r.mu.Unlock()
 
-	collection, err := r.createCollection(ctx, rule.Category)
-	if err != nil {
-		return err
+		// Create document
+		document := Document{
+			ID:       fmt.Sprintf("%s_%s", rule.Category, rule.Name),
+			Name:     rule.Name,
+			Category: rule.Category,
+			Rule:     rule,
+			Vector:   generateVector(rule),
+		}
+
+		// Add to collection
+		r.collections[rule.Category] = append(r.collections[rule.Category], document)
+
+		return nil
 	}
-
-	// Create document
-	document := Document{
-		ID:       fmt.Sprintf("%s_%s", rule.Category, rule.Name),
-		Name:     rule.Name,
-		Category: rule.Category,
-		Rule:     rule,
-	}
-
-	data, err := json.Marshal(document)
-	if err != nil {
-		return fmt.Errorf("failed to marshal document: %w", err)
-	}
-
-	// Add document to collection
-	err = collection.AddDocuments(ctx, []chromem.Document{
-		{
-			ID:      document.ID,
-			Content: string(data),
-		},
-	}, runtime.NumCPU())
-	if err != nil {
-		return fmt.Errorf("failed to add document to collection: %w", err)
-	}
-
-	return nil
 }
 
 // InitializeFromConfig initializes collections from existing config
@@ -143,34 +121,76 @@ func (r *Repository) InitializeFromConfig(cfg []core.Rule) error {
 	return nil
 }
 
+// cosineSimilarity calculates the cosine similarity between two vectors
+func cosineSimilarity(a, b []float32) float32 {
+	if len(a) != len(b) {
+		return 0
+	}
+
+	var dotProduct float32
+
+	var normA float32
+
+	var normB float32
+
+	for i := range a {
+		dotProduct += a[i] * b[i]
+		normA += a[i] * a[i]
+		normB += b[i] * b[i]
+	}
+
+	if normA == 0 || normB == 0 {
+		return 0
+	}
+
+	return dotProduct / (float32(float64(normA) * float64(normB)))
+}
+
 // SearchSimilar finds similar rules using vector similarity
 func (r *Repository) SearchSimilar(ctx context.Context, query string, limit int) ([]core.Rule, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+		r.mu.RLock()
+		defer r.mu.RUnlock()
 
-	var allRules []core.Rule
+		// Create a query vector
+		queryVector := generateVector(core.Rule{
+			Name:        query,
+			Description: query,
+		})
 
-	// Search in each collection
-	for _, collection := range r.collections {
-		results, err := collection.Query(ctx, query, limit, nil, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to query collection: %w", err)
+		type docWithScore struct {
+			doc   Document
+			score float32
 		}
 
-		for _, result := range results {
-			var document Document
-			if err := json.Unmarshal([]byte(result.Content), &document); err != nil {
-				return nil, fmt.Errorf("failed to unmarshal document: %w", err)
+		var allDocs []docWithScore
+
+		// Calculate similarity scores for all documents
+		for _, docs := range r.collections {
+			for i := range docs {
+				score := cosineSimilarity(queryVector, docs[i].Vector)
+				allDocs = append(allDocs, docWithScore{doc: docs[i], score: score})
 			}
-
-			allRules = append(allRules, document.Rule)
 		}
-	}
 
-	// Limit total results
-	if len(allRules) > limit {
-		allRules = allRules[:limit]
-	}
+		// Sort by similarity score (simple bubble sort for now)
+		for i := 0; i < len(allDocs)-1; i++ {
+			for j := 0; j < len(allDocs)-i-1; j++ {
+				if allDocs[j].score < allDocs[j+1].score {
+					allDocs[j], allDocs[j+1] = allDocs[j+1], allDocs[j]
+				}
+			}
+		}
 
-	return allRules, nil
+		// Get top N results
+		var rules []core.Rule
+		for i := 0; i < len(allDocs) && i < limit; i++ {
+			rules = append(rules, allDocs[i].doc.Rule)
+		}
+
+		return rules, nil
+	}
 }

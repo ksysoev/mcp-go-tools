@@ -6,11 +6,12 @@ import (
 
 	"github.com/ksysoev/mcp-go-tools/pkg/core"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRepository_GetCodeStyle(t *testing.T) {
 	repo, err := New()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Test data
 	rules := []core.Rule{
@@ -40,7 +41,7 @@ func TestRepository_GetCodeStyle(t *testing.T) {
 
 	// Initialize repository with test data
 	err = repo.InitializeFromConfig(rules)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	tests := []struct {
 		name       string
@@ -72,7 +73,7 @@ func TestRepository_GetCodeStyle(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := repo.GetCodeStyle(context.Background(), tt.categories)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Len(t, got, tt.want)
 		})
 	}
@@ -80,7 +81,7 @@ func TestRepository_GetCodeStyle(t *testing.T) {
 
 func TestRepository_SearchSimilar(t *testing.T) {
 	repo, err := New()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Test data
 	rules := []core.Rule{
@@ -103,7 +104,7 @@ func TestRepository_SearchSimilar(t *testing.T) {
 
 	// Initialize repository with test data
 	err = repo.InitializeFromConfig(rules)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Test search with different limits
 	tests := []struct {
@@ -135,7 +136,7 @@ func TestRepository_SearchSimilar(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := repo.SearchSimilar(context.Background(), tt.query, tt.limit)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Len(t, got, tt.want)
 		})
 	}
@@ -143,7 +144,7 @@ func TestRepository_SearchSimilar(t *testing.T) {
 
 func TestRepository_AddRule(t *testing.T) {
 	repo, err := New()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	rule := core.Rule{
 		Name:        "Test Rule",
@@ -159,12 +160,14 @@ func TestRepository_AddRule(t *testing.T) {
 
 	// Add rule
 	err = repo.AddRule(context.Background(), rule)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Verify rule was added
 	rules, err := repo.GetCodeStyle(context.Background(), []string{"testing"})
-	assert.NoError(t, err)
-	assert.Len(t, rules, 1)
+	require.NoError(t, err)
+	require.Len(t, rules, 1)
+
+	// Verify rule content
 	assert.Equal(t, rule.Name, rules[0].Name)
 	assert.Equal(t, rule.Category, rules[0].Category)
 	assert.Equal(t, rule.Description, rules[0].Description)
