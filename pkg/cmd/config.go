@@ -6,18 +6,18 @@ import (
 	"strings"
 
 	"github.com/ksysoev/mcp-go-tools/pkg/api"
-	"github.com/ksysoev/mcp-go-tools/pkg/repo/static"
+	"github.com/ksysoev/mcp-go-tools/pkg/repo"
 	"github.com/spf13/viper"
 )
 
 // Config represents the complete application configuration structure.
-// It combines API service configuration and rule definitions loaded from
+// It combines API service configuration and repository configuration loaded from
 // configuration files and environment variables.
 type Config struct {
 	// API holds the MCP server configuration
 	API api.Config `mapstructure:"api"`
-	// Rules defines the code generation rules and patterns
-	Rules static.Config `mapstructure:"rules"`
+	// Repository defines the repository configuration including type and rules
+	Repository repo.Config `mapstructure:"repository"`
 }
 
 // initConfig initializes the configuration from the specified file and environment.

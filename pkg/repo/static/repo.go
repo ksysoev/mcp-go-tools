@@ -48,10 +48,10 @@ func New(cfg *Config) *Repository {
 	}
 }
 
-// convertRule converts internal Rule to core.Rule.
-// This is an internal helper method that maps between the configuration
+// ConvertRule converts internal Rule to core.Rule.
+// This is a helper function that maps between the configuration
 // and domain representations of a rule.
-func (r *Repository) convertRule(rule Rule) core.Rule {
+func ConvertRule(rule Rule) core.Rule {
 	return core.Rule{
 		Name:        rule.Name,
 		Category:    rule.Category,
@@ -95,7 +95,7 @@ func (r *Repository) GetCodeStyle(ctx context.Context, categories []string) ([]c
 		for _, rule := range *r.config {
 			// Check if rule matches requested category
 			if categoryMap[rule.Category] {
-				rules = append(rules, r.convertRule(rule))
+				rules = append(rules, ConvertRule(rule))
 			}
 		}
 

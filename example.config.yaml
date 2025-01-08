@@ -1,785 +1,791 @@
-rules:
-  # Go Proverbs
-  - name: "go_proverbs"
-    category: "code"
-    description: "Rob Pike's Go Proverbs - practical guidelines for writing better Go code"
-    examples:
-      - description: "Clear is better than clever"
-        code: |
-          // Bad: Clever but hard to understand
-          func compress(data []byte) []byte {
-              return append(data[:i], data[i+1:]...)[:(len(data)-1)&3]
-          }
+# Repository configuration
+# You can choose between "static" and "vector" repository types
+repository:
+  # type: "vector" # Uncomment to use vector repository
+  type: "static"   # Default repository type
 
-          // Good: Clear and easy to understand
-          func compress(data []byte) []byte {
-              if len(data) == 0 {
-                  return data
-              }
-              
-              result := make([]byte, 0, len(data))
-              for i := 0; i < len(data); i++ {
-                  if shouldKeep(data[i]) {
-                      result = append(result, data[i])
-                  }
-              }
-              return result
-          }
-
-      - description: "Make the zero value useful"
-        code: |
-          // Bad: Requiring explicit initialization
-          type Buffer struct {
-              buf []byte
-              initialized bool
-          }
-
-          func (b *Buffer) Write(p []byte) error {
-              if !b.initialized {
-                  return errors.New("buffer not initialized")
-              }
-              b.buf = append(b.buf, p...)
-              return nil
-          }
-
-          // Good: Zero value is ready to use
-          type Buffer struct {
-              buf []byte
-          }
-
-          func (b *Buffer) Write(p []byte) error {
-              b.buf = append(b.buf, p...)
-              return nil
-          }
-
-      - description: "interface{} says nothing"
-        code: |
-          // Bad: Using empty interface
-          func process(data interface{}) {
-              // Type assertions everywhere
-              switch v := data.(type) {
-              case string:
-                  // ...
-              case int:
-                  // ...
-              default:
-                  // ...
-              }
-          }
-
-          // Good: Using specific interfaces
-          type Processor interface {
-              Process() error
-          }
-
-          func process(p Processor) error {
-              return p.Process()
-          }
-
-      - description: "Accept interfaces, return structs"
-        code: |
-          // Good: Accept interface for flexibility, return concrete type
-          type Reader interface {
-              Read(p []byte) (n int, err error)
-          }
-
-          func NewBufferedReader(r Reader) *BufferedReader {
-              return &BufferedReader{reader: r}
-          }
-
-      - description: "Don't panic"
-        code: |
-          // Bad: Using panic for error handling
-          func MustProcess(data []byte) []byte {
-              result, err := process(data)
-              if err != nil {
-                  panic(err)
-              }
-              return result
-          }
-
-          // Good: Return errors explicitly
-          func Process(data []byte) ([]byte, error) {
-              if len(data) == 0 {
-                  return nil, errors.New("empty data")
-              }
-              return process(data)
-          }
-
-  # SOLID Principles
-  - name: "single_responsibility_principle"
-    category: "code"
-    description: "Each type should have one, and only one, reason to change"
-    examples:
-      - description: "Good: Separate concerns into different types"
-        code: |
-          type UserService interface {
-              CreateUser(ctx context.Context, user *User) error
-              GetUser(ctx context.Context, id string) (*User, error)
-              UpdateUser(ctx context.Context, user *User) error
-              DeleteUser(ctx context.Context, id string) error
-          }
-
-          type UserValidator interface {
-              ValidateUser(user *User) error
-          }
-
-          type UserNotifier interface {
-              NotifyUserCreated(ctx context.Context, user *User) error
-          }
-      - description: "Bad: Mixing different responsibilities"
-        code: |
-          type UserService interface {
-              CreateUser(ctx context.Context, user *User) error
-              ValidateUserData(user *User) error
-              SendWelcomeEmail(user *User) error
-              UpdateUserInCache(user *User) error
-          }
-
-  - name: "open_closed_principle"
-    category: "code"
-    description: "Software entities should be open for extension, but closed for modification"
-    examples:
-      - description: "Good: Using interfaces and composition for extension"
-        code: |
-          type PaymentProcessor interface {
-              Process(payment *Payment) error
-          }
-
-          type StripeProcessor struct {
-              client *stripe.Client
-          }
-
-          func (s *StripeProcessor) Process(payment *Payment) error {
-              // Stripe-specific implementation
-              return nil
-          }
-
-          type PayPalProcessor struct {
-              client *paypal.Client
-          }
-
-          func (p *PayPalProcessor) Process(payment *Payment) error {
-              // PayPal-specific implementation
-              return nil
-          }
-      - description: "Bad: Using type switches that require modification"
-        code: |
-          func ProcessPayment(payment *Payment) error {
-              switch payment.Type {
-              case "stripe":
-                  // Stripe-specific code
-              case "paypal":
-                  // PayPal-specific code
-              // Need to modify this function for each new payment type
-              default:
-                  return errors.New("unsupported payment type")
-              }
-              return nil
-          }
-
-  - name: "interface_segregation_principle"
-    category: "code"
-    description: "Clients should not be forced to depend on interfaces they do not use"
-    examples:
-      - description: "Good: Small, focused interfaces"
-        code: |
-          type Reader interface {
-              Read(p []byte) (n int, err error)
-          }
-
-          type Writer interface {
-              Write(p []byte) (n int, err error)
-          }
-
-          // Compose interfaces when needed
-          type ReadWriter interface {
-              Reader
-              Writer
-          }
-      - description: "Bad: Large interface forcing unnecessary implementations"
-        code: |
-          type FileHandler interface {
-              Read(p []byte) (n int, err error)
-              Write(p []byte) (n int, err error)
-              Close() error
-              Seek(offset int64, whence int) (int64, error)
-              Truncate(size int64) error
-              Sync() error
-          }
-
-  - name: "dependency_inversion_principle"
-    category: "code"
-    description: "High-level modules should not depend on low-level modules. Both should depend on abstractions"
-    examples:
-      - description: "Good: Depending on interfaces"
-        code: |
-          type UserRepository interface {
-              Save(ctx context.Context, user *User) error
-              Find(ctx context.Context, id string) (*User, error)
-          }
-
-          type UserService struct {
-              repo UserRepository // Depends on abstraction
-          }
-
-          func NewUserService(repo UserRepository) *UserService {
-              return &UserService{repo: repo}
-          }
-      - description: "Bad: Depending on concrete implementations"
-        code: |
-          type PostgresUserRepository struct {
-              db *sql.DB
-          }
-
-          type UserService struct {
-              repo *PostgresUserRepository // Directly depends on concrete type
-          }
-
-          func NewUserService(db *sql.DB) *UserService {
-              return &UserService{
-                  repo: &PostgresUserRepository{db: db},
-              }
-          }
-
-  # Error handling
-  - name: "error_handling"
-    category: "code"
-    description: "Go error handling patterns"
-    examples:
-      - description: "Custom error types"
-        code: |
-          type NotFoundError struct {
-              Resource string
-              ID      string
-          }
-
-          func NewNotFoundError(resource, id string) *NotFoundError {
-              return &NotFoundError{
-                  Resource: resource,
-                  ID:      id,
-              }
-          }
-
-          func (e *NotFoundError) Error() string {
-              return fmt.Sprintf("%s not found: %s", e.Resource, e.ID)
-          }
-      - description: "Error wrapping"
-        code: |
-          func process(data []byte) error {
-              if err := validate(data); err != nil {
-                  return fmt.Errorf("validate data: %w", err)
-              }
-              return nil
-          }
-      - description: "Error logging, we should not log error if we are returning it"
-        code: |
-          func process(data []byte) error {
-              if err := validate(data); err != nil {
-                  slog.Error("failed to validate data", slog.Any("error", err))
-                  return nil
-              }
-              return nil
-          }
-
-  # Function documentation
-  - name: "func_documentation"
-    category: "documentation"
-    description: "Standard documentation format for Go functions"
-    examples:
-      - description: "Simple function documentation"
-        code: |
-          // Sum adds two integers and returns their sum.
-          func Sum(a, b int) int
-      - description: "Complex function documentation"
-        code: |
-          // ProcessData validates and transforms the input data according to the specified options.
-          // It applies each transformation sequentially and stops on the first error encountered.
-          // Data is the raw input to be processed
-          // Options control the transformation behavior
-          // Returns processed data in the requested format
-          // Returns error if validation fails or any transformation step errors
-          func ProcessData(data []byte, opts *Options) ([]byte, error)
-
-  # Package documentation
-  - name: "package_documentation"
-    category: "documentation"
-    description: "Standard documentation format for Go packages"
-    examples:
-      - description: "Package documentation"
-        code: |
-          // Package calculator provides basic arithmetic operations
-          // and advanced mathematical calculations.
-          //
-          // It implements common mathematical functions and utilities
-          // while ensuring thread-safety and proper error handling.
-          package calculator
-
-  # Interface documentation
-  - name: "interface_documentation"
-    category: "documentation"
-    description: "Standard documentation format for Go interfaces"
-    examples:
-      - description: "Interface documentation"
-        code: |
-          // Reader is the interface that wraps the basic Read method.
-          //
-          // Read reads up to len(p) bytes into p. It returns the number of bytes
-          // read (0 <= n <= len(p)) and any error encountered.
-          type Reader interface {
-              Read(p []byte) (n int, err error)
-          }
-
-  # Table-driven tests
-  - name: "testify"
-    category: "testing"
-    description: "All tests should be written using the testify package for assertions"
-    examples:
-      - description: "Basic table test"
-        code: |
-          func TestValidate_Success(t *testing.T) {
-              input := "test"
-              err := Validate(input)
-              assert.NoError(t, err)
-          }
-  - name: "table_tests"
-    category: "testing"
-    description: "Table-driven test patterns for Go"
-    examples:
-      - description: "Basic table test"
-        code: |
-          func TestValidate(t *testing.T) {
-              tests := []struct {
-                  name    string
-                  input   string
-                  wantErr bool
-              }{
-                  {
-                      name:    "valid input",
-                      input:   "test",
-                      wantErr: false,
-                  },
-                  {
-                      name:    "empty input",
-                      input:   "",
-                      wantErr: true,
-                  },
-              }
-
-              for _, tt := range tests {
-                  t.Run(tt.name, func(t *testing.T) {
-                      err := Validate(tt.input)
-                      if tt.wantErr {
-                          assert.Error(t, err)
-                      } else {
-                          assert.NoError(t, err)
-                      }
-                  })
-              }
-          }
-  - name: "mocking"
-    category: "testing"
-    description: "For mocking we should use mockery tool, which will generate mock for the interface"
-    examples:
-      - description: "Basic mock"
-        code: |
-          TestUserService_Create(t *testing.T) {
-              ctx := context.Background()
-              expected := &User{}
-
-              mockRepo := NewMockUserRepository(t)
-              mockRepo.EXPECT().Create(ctx, expected).Return(nil)
-
-              service := NewUserService(mockRepo)
-              err := service.Create(context.Background(), &User{})
-              assert.NoError(t, err)
-          }
-      - description: "mockery should be configured in the .mockery.yaml file"
-        code: |
-          with-expecter: true
-          mock-build-tags: "!compile"
-          inpackage: true
-          filename: "{{.InterfaceName | snakecase }}_mock.go"
-          dir: "{{.InterfaceDir}}"
-          mockname: "Mock{{.InterfaceName}}"
-          packages:
-            github.com/user/myservice/pkg/core:
-              interfaces:
-                ExampleInterface:
-
-
-  # Application template
-  - name: "Excecutable files"
-    category: "template"
-    description: "All main go files should be logcatead in ./cmd/example-app/main.go directory"
-    examples:
-      - description: "Main file should not contain any logic, only responsible for starting the application"
-        code: |
-          package main
-
-          import (
-            "context"
-            "log/slog"
-            "os"
-            "os/signal"
-            "syscall"
-
-            "github.com/user/example/pkg/cmd"
-          )
-
-          // version is the version of the application. It should be set at build time.
-          var version = "dev"
-
-          func main() {
-            ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-
-            rootCmd := cmd.InitCommands(version)
-
-            if err := rootCmd.ExecuteContext(ctx); err != nil {
-              slog.Error("failed to execute command", slog.Any("error", err))
-              os.Exit(1)
-            }
-          }
-  - name: "Command Line Interface"
-    category: "template"
-    description: "All command line interfaces loggic and also wiring logic should be located in ./pkg/cmd directory"
-    examples:
-      - description: "CLI commands initialization, we should use cobra framework for designing cli interface of the application. File should be located in ./pkg/cmd/init.go"
-        code: |
-          package cmd
-
-          import (
-            "fmt"
-            "log/slog"
-
-            "github.com/spf13/cobra"
-          )
-
-          type args struct {
-            version              string
-            LogLevel             string
-            ConfigPath           string
-            TextFormat           bool
-          }
-
-          // InitCommands initializes and returns the root command for the application.
-          func InitCommands(version string) (*cobra.Command, error) {
-            args := &args{
-              build:   build,
-              version: version,
+  rules:
+    # Go Proverbs
+    - name: "go_proverbs"
+      category: "code"
+      description: "Rob Pike's Go Proverbs - practical guidelines for writing better Go code"
+      examples:
+        - description: "Clear is better than clever"
+          code: |
+            // Bad: Clever but hard to understand
+            func compress(data []byte) []byte {
+                return append(data[:i], data[i+1:]...)[:(len(data)-1)&3]
             }
 
-            cmd := &cobra.Command{
-              Use:   "example-app",
-              Short: "Example application",
-              Long:  "Example application for demonstrating best practices",
-            }
-
-            cmd.AddCommand(ServerCommand(args))
-
-            cmd.PersistentFlags().StringVar(&args.ConfigPath, "config", "", "config file path")
-            cmd.PersistentFlags().StringVar(&args.LogLevel, "loglevel", "info", "log level (debug, info, warn, error)")
-            cmd.PersistentFlags().BoolVar(&args.TextFormat, "logtext", false, "log in text format, otherwise JSON")
-
-            return cmd, nil
-          }
-
-          // ServerCommand creates a new cobra.Command to start example-app server.
-          func ServerCommand(arg *args) *cobra.Command {
-            return &cobra.Command{
-              Use:   "server",
-              Short: "Start Example server",
-              Long:  "Start Example server",
-              RunE: func(cmd *cobra.Command, _ []string) error {
-                if err := initLogger(arg); err != nil {
-                  return err
+            // Good: Clear and easy to understand
+            func compress(data []byte) []byte {
+                if len(data) == 0 {
+                    return data
                 }
+                
+                result := make([]byte, 0, len(data))
+                for i := 0; i < len(data); i++ {
+                    if shouldKeep(data[i]) {
+                        result = append(result, data[i])
+                    }
+                }
+                return result
+            }
 
-                slog.Info("Starting Example server", slog.String("version", arg.version), slog.String("build", arg.build))
+        - description: "Make the zero value useful"
+          code: |
+            // Bad: Requiring explicit initialization
+            type Buffer struct {
+                buf []byte
+                initialized bool
+            }
 
-                cfg, err := initConfig(arg)
+            func (b *Buffer) Write(p []byte) error {
+                if !b.initialized {
+                    return errors.New("buffer not initialized")
+                }
+                b.buf = append(b.buf, p...)
+                return nil
+            }
+
+            // Good: Zero value is ready to use
+            type Buffer struct {
+                buf []byte
+            }
+
+            func (b *Buffer) Write(p []byte) error {
+                b.buf = append(b.buf, p...)
+                return nil
+            }
+
+        - description: "interface{} says nothing"
+          code: |
+            // Bad: Using empty interface
+            func process(data interface{}) {
+                // Type assertions everywhere
+                switch v := data.(type) {
+                case string:
+                    // ...
+                case int:
+                    // ...
+                default:
+                    // ...
+                }
+            }
+
+            // Good: Using specific interfaces
+            type Processor interface {
+                Process() error
+            }
+
+            func process(p Processor) error {
+                return p.Process()
+            }
+
+        - description: "Accept interfaces, return structs"
+          code: |
+            // Good: Accept interface for flexibility, return concrete type
+            type Reader interface {
+                Read(p []byte) (n int, err error)
+            }
+
+            func NewBufferedReader(r Reader) *BufferedReader {
+                return &BufferedReader{reader: r}
+            }
+
+        - description: "Don't panic"
+          code: |
+            // Bad: Using panic for error handling
+            func MustProcess(data []byte) []byte {
+                result, err := process(data)
                 if err != nil {
-                  return err
+                    panic(err)
+                }
+                return result
+            }
+
+            // Good: Return errors explicitly
+            func Process(data []byte) ([]byte, error) {
+                if len(data) == 0 {
+                    return nil, errors.New("empty data")
+                }
+                return process(data)
+            }
+
+    # SOLID Principles
+    - name: "single_responsibility_principle"
+      category: "code"
+      description: "Each type should have one, and only one, reason to change"
+      examples:
+        - description: "Good: Separate concerns into different types"
+          code: |
+            type UserService interface {
+                CreateUser(ctx context.Context, user *User) error
+                GetUser(ctx context.Context, id string) (*User, error)
+                UpdateUser(ctx context.Context, user *User) error
+                DeleteUser(ctx context.Context, id string) error
+            }
+
+            type UserValidator interface {
+                ValidateUser(user *User) error
+            }
+
+            type UserNotifier interface {
+                NotifyUserCreated(ctx context.Context, user *User) error
+            }
+        - description: "Bad: Mixing different responsibilities"
+          code: |
+            type UserService interface {
+                CreateUser(ctx context.Context, user *User) error
+                ValidateUserData(user *User) error
+                SendWelcomeEmail(user *User) error
+                UpdateUserInCache(user *User) error
+            }
+
+    - name: "open_closed_principle"
+      category: "code"
+      description: "Software entities should be open for extension, but closed for modification"
+      examples:
+        - description: "Good: Using interfaces and composition for extension"
+          code: |
+            type PaymentProcessor interface {
+                Process(payment *Payment) error
+            }
+
+            type StripeProcessor struct {
+                client *stripe.Client
+            }
+
+            func (s *StripeProcessor) Process(payment *Payment) error {
+                // Stripe-specific implementation
+                return nil
+            }
+
+            type PayPalProcessor struct {
+                client *paypal.Client
+            }
+
+            func (p *PayPalProcessor) Process(payment *Payment) error {
+                // PayPal-specific implementation
+                return nil
+            }
+        - description: "Bad: Using type switches that require modification"
+          code: |
+            func ProcessPayment(payment *Payment) error {
+                switch payment.Type {
+                case "stripe":
+                    // Stripe-specific code
+                case "paypal":
+                    // PayPal-specific code
+                // Need to modify this function for each new payment type
+                default:
+                    return errors.New("unsupported payment type")
+                }
+                return nil
+            }
+
+    - name: "interface_segregation_principle"
+      category: "code"
+      description: "Clients should not be forced to depend on interfaces they do not use"
+      examples:
+        - description: "Good: Small, focused interfaces"
+          code: |
+            type Reader interface {
+                Read(p []byte) (n int, err error)
+            }
+
+            type Writer interface {
+                Write(p []byte) (n int, err error)
+            }
+
+            // Compose interfaces when needed
+            type ReadWriter interface {
+                Reader
+                Writer
+            }
+        - description: "Bad: Large interface forcing unnecessary implementations"
+          code: |
+            type FileHandler interface {
+                Read(p []byte) (n int, err error)
+                Write(p []byte) (n int, err error)
+                Close() error
+                Seek(offset int64, whence int) (int64, error)
+                Truncate(size int64) error
+                Sync() error
+            }
+
+    - name: "dependency_inversion_principle"
+      category: "code"
+      description: "High-level modules should not depend on low-level modules. Both should depend on abstractions"
+      examples:
+        - description: "Good: Depending on interfaces"
+          code: |
+            type UserRepository interface {
+                Save(ctx context.Context, user *User) error
+                Find(ctx context.Context, id string) (*User, error)
+            }
+
+            type UserService struct {
+                repo UserRepository // Depends on abstraction
+            }
+
+            func NewUserService(repo UserRepository) *UserService {
+                return &UserService{repo: repo}
+            }
+        - description: "Bad: Depending on concrete implementations"
+          code: |
+            type PostgresUserRepository struct {
+                db *sql.DB
+            }
+
+            type UserService struct {
+                repo *PostgresUserRepository // Directly depends on concrete type
+            }
+
+            func NewUserService(db *sql.DB) *UserService {
+                return &UserService{
+                    repo: &PostgresUserRepository{db: db},
+                }
+            }
+
+    # Error handling
+    - name: "error_handling"
+      category: "code"
+      description: "Go error handling patterns"
+      examples:
+        - description: "Custom error types"
+          code: |
+            type NotFoundError struct {
+                Resource string
+                ID      string
+            }
+
+            func NewNotFoundError(resource, id string) *NotFoundError {
+                return &NotFoundError{
+                    Resource: resource,
+                    ID:      id,
+                }
+            }
+
+            func (e *NotFoundError) Error() string {
+                return fmt.Sprintf("%s not found: %s", e.Resource, e.ID)
+            }
+        - description: "Error wrapping"
+          code: |
+            func process(data []byte) error {
+                if err := validate(data); err != nil {
+                    return fmt.Errorf("validate data: %w", err)
+                }
+                return nil
+            }
+        - description: "Error logging, we should not log error if we are returning it"
+          code: |
+            func process(data []byte) error {
+                if err := validate(data); err != nil {
+                    slog.Error("failed to validate data", slog.Any("error", err))
+                    return nil
+                }
+                return nil
+            }
+
+    # Function documentation
+    - name: "func_documentation"
+      category: "documentation"
+      description: "Standard documentation format for Go functions"
+      examples:
+        - description: "Simple function documentation"
+          code: |
+            // Sum adds two integers and returns their sum.
+            func Sum(a, b int) int
+        - description: "Complex function documentation"
+          code: |
+            // ProcessData validates and transforms the input data according to the specified options.
+            // It applies each transformation sequentially and stops on the first error encountered.
+            // Data is the raw input to be processed
+            // Options control the transformation behavior
+            // Returns processed data in the requested format
+            // Returns error if validation fails or any transformation step errors
+            func ProcessData(data []byte, opts *Options) ([]byte, error)
+
+    # Package documentation
+    - name: "package_documentation"
+      category: "documentation"
+      description: "Standard documentation format for Go packages"
+      examples:
+        - description: "Package documentation"
+          code: |
+            // Package calculator provides basic arithmetic operations
+            // and advanced mathematical calculations.
+            //
+            // It implements common mathematical functions and utilities
+            // while ensuring thread-safety and proper error handling.
+            package calculator
+
+    # Interface documentation
+    - name: "interface_documentation"
+      category: "documentation"
+      description: "Standard documentation format for Go interfaces"
+      examples:
+        - description: "Interface documentation"
+          code: |
+            // Reader is the interface that wraps the basic Read method.
+            //
+            // Read reads up to len(p) bytes into p. It returns the number of bytes
+            // read (0 <= n <= len(p)) and any error encountered.
+            type Reader interface {
+                Read(p []byte) (n int, err error)
+            }
+
+    # Table-driven tests
+    - name: "testify"
+      category: "testing"
+      description: "All tests should be written using the testify package for assertions"
+      examples:
+        - description: "Basic table test"
+          code: |
+            func TestValidate_Success(t *testing.T) {
+                input := "test"
+                err := Validate(input)
+                assert.NoError(t, err)
+            }
+    - name: "table_tests"
+      category: "testing"
+      description: "Table-driven test patterns for Go"
+      examples:
+        - description: "Basic table test"
+          code: |
+            func TestValidate(t *testing.T) {
+                tests := []struct {
+                    name    string
+                    input   string
+                    wantErr bool
+                }{
+                    {
+                        name:    "valid input",
+                        input:   "test",
+                        wantErr: false,
+                    },
+                    {
+                        name:    "empty input",
+                        input:   "",
+                        wantErr: true,
+                    },
                 }
 
-                return runServer(cmd.Context(), cfg)
-              },
+                for _, tt := range tests {
+                    t.Run(tt.name, func(t *testing.T) {
+                        err := Validate(tt.input)
+                        if tt.wantErr {
+                            assert.Error(t, err)
+                        } else {
+                            assert.NoError(t, err)
+                        }
+                    })
+                }
             }
-          }
-      - desciption: "Command runner, should contain wiring logic of application and run appliacation logic. File should be located in ./pkg/cmd/server.go"
-        code: |
-          package cmd
+    - name: "mocking"
+      category: "testing"
+      description: "For mocking we should use mockery tool, which will generate mock for the interface"
+      examples:
+        - description: "Basic mock"
+          code: |
+            TestUserService_Create(t *testing.T) {
+                ctx := context.Background()
+                expected := &User{}
 
-          import (
-            "context"
-            "fmt"
-            "log/slog"
+                mockRepo := NewMockUserRepository(t)
+                mockRepo.EXPECT().Create(ctx, expected).Return(nil)
 
-            "github.com/user/example/pkg/api"
-            "github.com/user/example/pkg/repo"
-          )
-
-          // runServer starts the Example server.
-          func runServer(ctx context.Context, cfg *Config) error {
-            repo := repo.New(cfg.Database)
-            prov := prov.New(cfg.Provider)
-            svc := core.New(repo, prov)
-            api := api.New(cfg.Server, svc)
-
-            srv := api.NewServer(cfg.Server, api)
-
-            return srv.Run(ctx)
-          }
-      - description: "Configuration initialization, we should use viper for configuration management. File should be located in ./pkg/cmd/config.go"
-        code: |
-          package cmd
-
-          import (
-            "context"
-            "fmt"
-            "log/slog"
-
-            "github.com/user/example/pkg/api"
-            "github.com/user/example/pkg/repo"
-            "github.com/spf13/viper"
-          )
-
-          type Config struct {
-            Server    api.Config    `mapstructure:"api"`
-            Database  repo.Config   `mapstructure:"database"`
-          }
-
-          // initConfig initializes the configuration by reading from the specified config file.
-          func initConfig(arg *args) (*Config, error) {
-            v := viper.New()
-
-            v.SetConfigFile(arg.ConfigPath)
-
-            if err := v.ReadInConfig(); err != nil {
-              return nil, fmt.Errorf("failed to read config: %w", err)
-            ]
-
-            var cfg Config
-
-            v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-            v.AutomaticEnv()
-
-            if err := v.Unmarshal(&cfg); err != nil {
-              return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+                service := NewUserService(mockRepo)
+                err := service.Create(context.Background(), &User{})
+                assert.NoError(t, err)
             }
+        - description: "mockery should be configured in the .mockery.yaml file"
+          code: |
+            with-expecter: true
+            mock-build-tags: "!compile"
+            inpackage: true
+            filename: "{{.InterfaceName | snakecase }}_mock.go"
+            dir: "{{.InterfaceDir}}"
+            mockname: "Mock{{.InterfaceName}}"
+            packages:
+              github.com/user/myservice/pkg/core:
+                interfaces:
+                  ExampleInterface:
 
-            slog.Debug("Config loaded", slog.Any("config", cfg))
 
-            return &cfg, nil
-          }
-      - description: "Logger initialization, we should use log/slog for logging. File should be located in ./pkg/cmd/logger.go"
-        code: |
-          package cmd
+    # Application template
+    - name: "Excecutable files"
+      category: "template"
+      description: "All main go files should be logcatead in ./cmd/example-app/main.go directory"
+      examples:
+        - description: "Main file should not contain any logic, only responsible for starting the application"
+          code: |
+            package main
 
-          import (
-            "log/slog"
-            "os"
-          )
+            import (
+              "context"
+              "log/slog"
+              "os"
+              "os/signal"
+              "syscall"
 
-          // initLogger initializes the default logger for the application using slog.
-          func initLogger(arg *args) error {
-            var logLever slog.Level
-            if err := logLever.UnmarshalText([]byte(arg.LogLevel)); err != nil {
-              return err
-            }
-
-            options := &slog.HandlerOptions{
-              Level: logLever,
-            }
-
-            var logHandler slog.Handler
-            if arg.TextFormat {
-              logHandler = slog.NewTextHandler(os.Stdout, options)
-            } else {
-              logHandler = slog.NewJSONHandler(os.Stdout, options)
-            }
-
-            logger := slog.New(logHandler).With(
-              slog.String("ver", arg.version),
-              slog.String("app", "example-app"),
+              "github.com/user/example/pkg/cmd"
             )
 
-            slog.SetDefault(logger)
+            // version is the version of the application. It should be set at build time.
+            var version = "dev"
 
-            return nil
-          }
-  - name: "API packag "
-    category: "template"
-    description: "API server, driver side of the application, should be located in ./pkg/api directory"
-    examples:
-      - description: "For implementing HTTP API server we shouldu use http package from standard library. File should be located in ./pkg/api/server.go"
-        code: |
-          package api
+            func main() {
+              ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
-          import (
-            "context"
-            "fmt"
-            "net/http"
-            "time"
+              rootCmd := cmd.InitCommands(version)
 
-            "github.com/user/example/pkg/core"
-          )
+              if err := rootCmd.ExecuteContext(ctx); err != nil {
+                slog.Error("failed to execute command", slog.Any("error", err))
+                os.Exit(1)
+              }
+            }
+    - name: "Command Line Interface"
+      category: "template"
+      description: "All command line interfaces loggic and also wiring logic should be located in ./pkg/cmd directory"
+      examples:
+        - description: "CLI commands initialization, we should use cobra framework for designing cli interface of the application. File should be located in ./pkg/cmd/init.go"
+          code: |
+            package cmd
 
-          type CoreService interface {
-            HandleCheck() error
-          }
+            import (
+              "fmt"
+              "log/slog"
 
-          type Config struct {
-            Listen string        `mapstructure:"listen"`
-          }
+              "github.com/spf13/cobra"
+            )
 
-          // Server represents the HTTP server for the API.
-          type Server struct {
-            srv *http.Server
-            svc CoreService
-          }
-
-          // NewServer creates a new instance of the API server.
-          func New(cfg Config, svc CoreService) *Server {
-            s := &Server{
-              srv: &http.Server{
-                Addr:         cfg.Listen,
-                ReadTimeout:  5 * time.Second,
-                WriteTimeout: 10 * time.Second,
-              },
-              svc: svc,
+            type args struct {
+              version              string
+              LogLevel             string
+              ConfigPath           string
+              TextFormat           bool
             }
 
-            return s
-          }
-
-          // Run starts the API server.
-          func (s *Server) Run(ctx context.Context) error {
-            s.setupRoutes()
-
-            errCh := make(chan error, 1)
-
-            go func() {
-              if err := s.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-                errCh <- fmt.Errorf("failed to start server: %w", err)
+            // InitCommands initializes and returns the root command for the application.
+            func InitCommands(version string) (*cobra.Command, error) {
+              args := &args{
+                build:   build,
+                version: version,
               }
-            }()
 
-            select {
-            case err := <-errCh:
-              return err
-            case <-ctx.Done():
-              s.srv.Shutdown(ctx)
+              cmd := &cobra.Command{
+                Use:   "example-app",
+                Short: "Example application",
+                Long:  "Example application for demonstrating best practices",
+              }
+
+              cmd.AddCommand(ServerCommand(args))
+
+              cmd.PersistentFlags().StringVar(&args.ConfigPath, "config", "", "config file path")
+              cmd.PersistentFlags().StringVar(&args.LogLevel, "loglevel", "info", "log level (debug, info, warn, error)")
+              cmd.PersistentFlags().BoolVar(&args.TextFormat, "logtext", false, "log in text format, otherwise JSON")
+
+              return cmd, nil
+            }
+
+            // ServerCommand creates a new cobra.Command to start example-app server.
+            func ServerCommand(arg *args) *cobra.Command {
+              return &cobra.Command{
+                Use:   "server",
+                Short: "Start Example server",
+                Long:  "Start Example server",
+                RunE: func(cmd *cobra.Command, _ []string) error {
+                  if err := initLogger(arg); err != nil {
+                    return err
+                  }
+
+                  slog.Info("Starting Example server", slog.String("version", arg.version), slog.String("build", arg.build))
+
+                  cfg, err := initConfig(arg)
+                  if err != nil {
+                    return err
+                  }
+
+                  return runServer(cmd.Context(), cfg)
+                },
+              }
+            }
+        - desciption: "Command runner, should contain wiring logic of application and run appliacation logic. File should be located in ./pkg/cmd/server.go"
+          code: |
+            package cmd
+
+            import (
+              "context"
+              "fmt"
+              "log/slog"
+
+              "github.com/user/example/pkg/api"
+              "github.com/user/example/pkg/repo"
+            )
+
+            // runServer starts the Example server.
+            func runServer(ctx context.Context, cfg *Config) error {
+              repo := repo.New(cfg.Database)
+              prov := prov.New(cfg.Provider)
+              svc := core.New(repo, prov)
+              api := api.New(cfg.Server, svc)
+
+              srv := api.NewServer(cfg.Server, api)
+
+              return srv.Run(ctx)
+            }
+        - description: "Configuration initialization, we should use viper for configuration management. File should be located in ./pkg/cmd/config.go"
+          code: |
+            package cmd
+
+            import (
+              "context"
+              "fmt"
+              "log/slog"
+
+              "github.com/user/example/pkg/api"
+              "github.com/user/example/pkg/repo"
+              "github.com/spf13/viper"
+            )
+
+            type Config struct {
+              Server    api.Config    `mapstructure:"api"`
+              Database  repo.Config   `mapstructure:"database"`
+            }
+
+            // initConfig initializes the configuration by reading from the specified config file.
+            func initConfig(arg *args) (*Config, error) {
+              v := viper.New()
+
+              v.SetConfigFile(arg.ConfigPath)
+
+              if err := v.ReadInConfig(); err != nil {
+                return nil, fmt.Errorf("failed to read config: %w", err)
+              ]
+
+              var cfg Config
+
+              v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+              v.AutomaticEnv()
+
+              if err := v.Unmarshal(&cfg); err != nil {
+                return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+              }
+
+              slog.Debug("Config loaded", slog.Any("config", cfg))
+
+              return &cfg, nil
+            }
+        - description: "Logger initialization, we should use log/slog for logging. File should be located in ./pkg/cmd/logger.go"
+          code: |
+            package cmd
+
+            import (
+              "log/slog"
+              "os"
+            )
+
+            // initLogger initializes the default logger for the application using slog.
+            func initLogger(arg *args) error {
+              var logLever slog.Level
+              if err := logLever.UnmarshalText([]byte(arg.LogLevel)); err != nil {
+                return err
+              }
+
+              options := &slog.HandlerOptions{
+                Level: logLever,
+              }
+
+              var logHandler slog.Handler
+              if arg.TextFormat {
+                logHandler = slog.NewTextHandler(os.Stdout, options)
+              } else {
+                logHandler = slog.NewJSONHandler(os.Stdout, options)
+              }
+
+              logger := slog.New(logHandler).With(
+                slog.String("ver", arg.version),
+                slog.String("app", "example-app"),
+              )
+
+              slog.SetDefault(logger)
+
               return nil
             }
-          }
+    - name: "API packag "
+      category: "template"
+      description: "API server, driver side of the application, should be located in ./pkg/api directory"
+      examples:
+        - description: "For implementing HTTP API server we shouldu use http package from standard library. File should be located in ./pkg/api/server.go"
+          code: |
+            package api
 
-          func (s *Server) setupRoutes() {
-            http.HandleFunc("/check", s.handleCheck)
-          }
+            import (
+              "context"
+              "fmt"
+              "net/http"
+              "time"
 
-          func (s *Server) handleCheck(w http.ResponseWriter, r *http.Request) {
-            if err := s.svc.HandleCheck(); err != nil {
-              http.Error(w, err.Error(), http.StatusInternalServerError)
-              return
+              "github.com/user/example/pkg/core"
+            )
+
+            type CoreService interface {
+              HandleCheck() error
             }
 
-            w.WriteHeader(http.StatusOK)
-          }
-
-  - name: "Core package"
-    category: "template"
-    description: "Business logic of the application, this is the heart of the application it should be located in ./pkg/core directory. logic should be independent of the driver and driven sides of the application"
-    examples:
-      - description: "Core service should be independent of the driver and driven sides of the application"
-        code: |
-          package core
-
-          import (
-            "context"
-            "fmt"
-          )
-
-          type UserRepo interface {
-            ChekStatus() error
-          }
-
-          type SomeProv interface {
-            ChekStatus() error
-          }
-
-          type Service {
-            repo UserRepo
-            prov SomeProv
-          }
-          
-          func New(repo UserRepo, some SomeProv) *Service {
-            return &Service{repo: repo, prov: some}
-          }
-
-          func (s *Service) HandleCheck() error {
-            if err := s.repo.CheckStatus(); err != nil {
-              return fmt.Errorf("failed to check status of repo: %w", err)
+            type Config struct {
+              Listen string        `mapstructure:"listen"`
             }
 
-            if err := s.repo.CheckStatus(); err != nil {
-              return fmt.Errorf("failed to check status of provider: %w", err)
+            // Server represents the HTTP server for the API.
+            type Server struct {
+              srv *http.Server
+              svc CoreService
             }
 
-            return nil
-          }
-  - name: "Repository package"
-    category: "template"
-    description: "Repository layer should be located in ./pkg/repo directory, it should be responsible for managing data and internal state of the application"
-    examples:
-      - description: "Repository layer should be responsible for managing data and internal state of the application"
-        code: |
-          package core
+            // NewServer creates a new instance of the API server.
+            func New(cfg Config, svc CoreService) *Server {
+              s := &Server{
+                srv: &http.Server{
+                  Addr:         cfg.Listen,
+                  ReadTimeout:  5 * time.Second,
+                  WriteTimeout: 10 * time.Second,
+                },
+                svc: svc,
+              }
 
-          import (
-            "context"
-            "fmt"
-          )
+              return s
+            }
 
-          Config struct {
-            DSN string `mapstructure:"dsn"`
-          }
+            // Run starts the API server.
+            func (s *Server) Run(ctx context.Context) error {
+              s.setupRoutes()
 
-          type Repo {
-            cfg Config
-          }
-          
-          func New(cfg Config) *Repo {
-            return &Repo{cfg: cfg}
-          }
+              errCh := make(chan error, 1)
 
-          func (r *Repo) CheckStatus() error {
-            // Check status logic
-            return nil
-          }
-  - name: "Providers package"
-    category: "template"
-    description: "Providers package should be located in ./pkg/prov directory, it should be responsible for managing external dependencies of the application"
-    examples:
-      - description: "Providers package should be responsible for managing external dependencies of the application, like external services api clients"
-        code: |
-          package prov
+              go func() {
+                if err := s.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+                  errCh <- fmt.Errorf("failed to start server: %w", err)
+                }
+              }()
 
-          import (
-            "context"
-            "fmt"
-          )
+              select {
+              case err := <-errCh:
+                return err
+              case <-ctx.Done():
+                s.srv.Shutdown(ctx)
+                return nil
+              }
+            }
 
-          type SomeClient struct {
-            addr string
-          }
+            func (s *Server) setupRoutes() {
+              http.HandleFunc("/check", s.handleCheck)
+            }
 
-          func NewSomeClient(addr string) *SomeClient {
-            return &SomeClient{addr: addr}
-          }
+            func (s *Server) handleCheck(w http.ResponseWriter, r *http.Request) {
+              if err := s.svc.HandleCheck(); err != nil {
+                http.Error(w, err.Error(), http.StatusInternalServerError)
+                return
+              }
 
-          func (c *SomeClient) CheckStatus() error {
-            // Check status logic
-            return nil
-          }
+              w.WriteHeader(http.StatusOK)
+            }
+
+    - name: "Core package"
+      category: "template"
+      description: "Business logic of the application, this is the heart of the application it should be located in ./pkg/core directory. logic should be independent of the driver and driven sides of the application"
+      examples:
+        - description: "Core service should be independent of the driver and driven sides of the application"
+          code: |
+            package core
+
+            import (
+              "context"
+              "fmt"
+            )
+
+            type UserRepo interface {
+              ChekStatus() error
+            }
+
+            type SomeProv interface {
+              ChekStatus() error
+            }
+
+            type Service {
+              repo UserRepo
+              prov SomeProv
+            }
+            
+            func New(repo UserRepo, some SomeProv) *Service {
+              return &Service{repo: repo, prov: some}
+            }
+
+            func (s *Service) HandleCheck() error {
+              if err := s.repo.CheckStatus(); err != nil {
+                return fmt.Errorf("failed to check status of repo: %w", err)
+              }
+
+              if err := s.repo.CheckStatus(); err != nil {
+                return fmt.Errorf("failed to check status of provider: %w", err)
+              }
+
+              return nil
+            }
+    - name: "Repository package"
+      category: "template"
+      description: "Repository layer should be located in ./pkg/repo directory, it should be responsible for managing data and internal state of the application"
+      examples:
+        - description: "Repository layer should be responsible for managing data and internal state of the application"
+          code: |
+            package core
+
+            import (
+              "context"
+              "fmt"
+            )
+
+            Config struct {
+              DSN string `mapstructure:"dsn"`
+            }
+
+            type Repo {
+              cfg Config
+            }
+            
+            func New(cfg Config) *Repo {
+              return &Repo{cfg: cfg}
+            }
+
+            func (r *Repo) CheckStatus() error {
+              // Check status logic
+              return nil
+            }
+    - name: "Providers package"
+      category: "template"
+      description: "Providers package should be located in ./pkg/prov directory, it should be responsible for managing external dependencies of the application"
+      examples:
+        - description: "Providers package should be responsible for managing external dependencies of the application, like external services api clients"
+          code: |
+            package prov
+
+            import (
+              "context"
+              "fmt"
+            )
+
+            type SomeClient struct {
+              addr string
+            }
+
+            func NewSomeClient(addr string) *SomeClient {
+              return &SomeClient{addr: addr}
+            }
+
+            func (c *SomeClient) CheckStatus() error {
+              // Check status logic
+              return nil
+            }
 

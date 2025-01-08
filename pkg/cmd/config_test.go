@@ -44,9 +44,11 @@ func TestInitConfigWithDifferentFileTypes(t *testing.T) {
 			name: "valid yaml",
 			fileContent: `
 api: {}
-rules:
-  - name: "test_rule"
-    category: "testing"
+repository:
+  type: "static"
+  rules:
+    - name: "test_rule"
+      category: "testing"
 `,
 			fileExt:   ".yaml",
 			wantError: false,
@@ -55,10 +57,13 @@ rules:
 			name: "valid json",
 			fileContent: `{
 				"api": {},
-				"rules": [{
-					"name": "test_rule",
-					"category": "testing"
-				}]
+				"repository": {
+					"type": "static",
+					"rules": [{
+						"name": "test_rule",
+						"category": "testing"
+					}]
+				}
 			}`,
 			fileExt:   ".json",
 			wantError: false,
@@ -67,8 +72,10 @@ rules:
 			name: "invalid extension",
 			fileContent: `
 api: {}
-rules:
-  - name: "test_rule"
+repository:
+  type: "static"
+  rules:
+    - name: "test_rule"
 `,
 			fileExt:      ".invalid",
 			wantError:    true,
@@ -103,8 +110,9 @@ rules:
 
 			require.NoError(t, err)
 			assert.NotNil(t, cfg)
-			assert.NotEmpty(t, cfg.Rules)
-			assert.Equal(t, "test_rule", cfg.Rules[0].Name)
+			assert.NotEmpty(t, cfg.Repository.Rules)
+			assert.Equal(t, "test_rule", cfg.Repository.Rules[0].Name)
+			assert.Equal(t, "static", string(cfg.Repository.Type))
 		})
 	}
 }
