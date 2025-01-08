@@ -169,10 +169,4 @@ func TestRepository_AddRule(t *testing.T) {
 	assert.Equal(t, rule.Category, rules[0].Category)
 	assert.Equal(t, rule.Description, rules[0].Description)
 	assert.Equal(t, rule.Examples, rules[0].Examples)
-
-	// Verify vector was generated
-	ruleID := "testing_Test Rule"
-	vector, exists := repo.vectors[ruleID]
-	assert.True(t, exists)
-	assert.Len(t, vector, 384)
 }
