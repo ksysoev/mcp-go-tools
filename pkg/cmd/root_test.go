@@ -83,14 +83,16 @@ func TestServerCommandExecution(t *testing.T) {
 	// Create a test config file
 	configContent := `
 api: {}
-rules:
-  - name: "test_rule"
-    category: "testing"
-    description: "test rule"
-    language: "go"
-    examples:
-      - description: "Example"
-        code: "test code"
+repository:
+  type: "static"
+  rules:
+    - name: "test_rule"
+      category: "testing"
+      description: "test rule"
+      language: "go"
+      examples:
+        - description: "Example"
+          code: "test code"
 `
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.yaml")
