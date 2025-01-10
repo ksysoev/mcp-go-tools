@@ -7,6 +7,7 @@ package static
 
 import (
 	"context"
+	"strings"
 
 	"github.com/ksysoev/mcp-go-tools/pkg/core"
 )
@@ -53,7 +54,7 @@ func New(cfg *Config) *Repository {
 // convertRule converts internal Rule to core.Rule.
 // This is an internal helper method that maps between the configuration
 // and domain representations of a rule.
-func (r *Repository) convertRule(rule Rule) core.Rule {
+func (r *Repository) convertRule(rule *Rule) core.Rule {
 	return core.Rule{
 		Name:        rule.Name,
 		Category:    rule.Category,
@@ -81,7 +82,10 @@ func convertExamples(examples []Example) []core.Example {
 // GetCodeStyle returns all rules that match the specified categories.
 // It filters the configuration rules by categories, converting matches to core.Rule format.
 // Returns error if the context is cancelled.
-func (r *Repository) GetCodeStyle(ctx context.Context, categories []string) ([]core.Rule, error) {
+// GetCodeStyle returns rules filtered by categories and keywords.
+// If keywords is empty, all rules matching categories are returned.
+// If a rule has no keywords defined, it is considered a general rule and is always returned.
+func (r *Repository) GetCodeStyle(ctx context.Context, categories, keywords []string) ([]core.Rule, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -95,10 +99,27 @@ func (r *Repository) GetCodeStyle(ctx context.Context, categories []string) ([]c
 		}
 
 		for _, rule := range *r.config {
-			// Check if rule matches requested category
-			if categoryMap[rule.Category] {
-				rules = append(rules, r.convertRule(rule))
+			// Skip if category doesn't match
+			if len(categories) > 0 && !categoryMap[rule.Category] {
+				continue
 			}
+
+			// If no keywords specified or rule has no keywords, include the rule
+			if len(keywords) == 0 || len(rule.Keywords) == 0 {
+				rules = append(rules, r.convertRule(&rule))
+				continue
+			}
+
+			// Check if any of the requested keywords match rule's keywords
+			for _, keyword := range keywords {
+				for _, ruleKeyword := range rule.Keywords {
+					if strings.EqualFold(keyword, ruleKeyword) {
+						rules = append(rules, r.convertRule(&rule))
+						goto nextRule
+					}
+				}
+			}
+		nextRule:
 		}
 
 		return rules, nil

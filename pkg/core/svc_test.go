@@ -99,8 +99,11 @@ func TestService_GetCodeStyle(t *testing.T) {
 	}
 
 	mockRepo := NewMockResourceRepo(t)
+
+	var keywords []string
+
 	mockRepo.EXPECT().
-		GetCodeStyle(ctx, categories).
+		GetCodeStyle(ctx, categories, keywords).
 		Return(expectedRules, nil)
 
 	svc := New(mockRepo)
