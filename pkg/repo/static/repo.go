@@ -22,14 +22,16 @@ type Rule struct {
 	Category    string    `mapstructure:"category"` // One of: "documentation", "testing", "code"
 	Description string    `mapstructure:"description"`
 	Examples    []Example `mapstructure:"examples"`
+	Keywords    []string  `mapstructure:"keywords,omitempty"`
 }
 
 // Example provides a usage example for a rule.
-// It includes a description of what the example demonstrates
-// and the actual code snippet.
+// It includes a description of what the example demonstrates,
+// the actual code snippet, and optional keywords for categorization.
 type Example struct {
-	Description string `mapstructure:"description"`
-	Code        string `mapstructure:"code"`
+	Description string   `mapstructure:"description"`
+	Code        string   `mapstructure:"code"`
+	Keywords    []string `mapstructure:"keywords,omitempty"`
 }
 
 // Repository provides functionality to work with static resources and code rules.
