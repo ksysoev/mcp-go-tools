@@ -13,6 +13,7 @@ func TestGetCodeStyle(t *testing.T) {
 			Name:        "test_rule1",
 			Category:    "testing",
 			Description: "Test rule 1",
+			Keywords:    []string{"unit", "basic"},
 			Examples: []Example{
 				{
 					Description: "Example 1",
@@ -24,6 +25,7 @@ func TestGetCodeStyle(t *testing.T) {
 			Name:        "test_rule2",
 			Category:    "testing",
 			Description: "Test rule 2",
+			Keywords:    []string{"integration", "advanced"},
 			Examples: []Example{
 				{
 					Description: "Example 2",
@@ -51,29 +53,63 @@ func TestGetCodeStyle(t *testing.T) {
 	tests := []struct {
 		name       string
 		categories []string
+		keywords   []string
 		want       int
 	}{
 		{
 			name:       "single category rules",
 			categories: []string{"testing"},
+			keywords:   nil,
 			want:       2,
 		},
 		{
 			name:       "multiple categories rules",
 			categories: []string{"testing", "code"},
+			keywords:   nil,
 			want:       3,
 		},
 		{
 			name:       "no matching rules",
 			categories: []string{"nonexistent"},
+			keywords:   nil,
 			want:       0,
+		},
+		{
+			name:       "filter by keyword unit",
+			categories: []string{"testing"},
+			keywords:   []string{"unit"},
+			want:       1,
+		},
+		{
+			name:       "filter by keyword advanced",
+			categories: []string{"testing"},
+			keywords:   []string{"advanced"},
+			want:       1,
+		},
+		{
+			name:       "filter by multiple keywords",
+			categories: []string{"testing"},
+			keywords:   []string{"unit", "integration"},
+			want:       2,
+		},
+		{
+			name:       "no keyword match",
+			categories: []string{"testing"},
+			keywords:   []string{"nonexistent"},
+			want:       0,
+		},
+		{
+			name:       "general rule without keywords",
+			categories: []string{"code"},
+			keywords:   []string{"any"},
+			want:       1,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var rules []core.Rule
-			rules, err := svc.GetCodeStyle(ctx, tt.categories)
+			rules, err := svc.GetCodeStyle(ctx, tt.categories, tt.keywords)
 
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
