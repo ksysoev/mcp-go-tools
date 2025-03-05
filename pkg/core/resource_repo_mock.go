@@ -23,9 +23,9 @@ func (_m *MockResourceRepo) EXPECT() *MockResourceRepo_Expecter {
 	return &MockResourceRepo_Expecter{mock: &_m.Mock}
 }
 
-// GetCodeStyle provides a mock function with given fields: ctx, categories
-func (_m *MockResourceRepo) GetCodeStyle(ctx context.Context, categories []string) ([]Rule, error) {
-	ret := _m.Called(ctx, categories)
+// GetCodeStyle provides a mock function with given fields: ctx, categories, keywords
+func (_m *MockResourceRepo) GetCodeStyle(ctx context.Context, categories []string, keywords []string) ([]Rule, error) {
+	ret := _m.Called(ctx, categories, keywords)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetCodeStyle")
@@ -33,19 +33,19 @@ func (_m *MockResourceRepo) GetCodeStyle(ctx context.Context, categories []strin
 
 	var r0 []Rule
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []string) ([]Rule, error)); ok {
-		return rf(ctx, categories)
+	if rf, ok := ret.Get(0).(func(context.Context, []string, []string) ([]Rule, error)); ok {
+		return rf(ctx, categories, keywords)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []string) []Rule); ok {
-		r0 = rf(ctx, categories)
+	if rf, ok := ret.Get(0).(func(context.Context, []string, []string) []Rule); ok {
+		r0 = rf(ctx, categories, keywords)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]Rule)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []string) error); ok {
-		r1 = rf(ctx, categories)
+	if rf, ok := ret.Get(1).(func(context.Context, []string, []string) error); ok {
+		r1 = rf(ctx, categories, keywords)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -61,13 +61,14 @@ type MockResourceRepo_GetCodeStyle_Call struct {
 // GetCodeStyle is a helper method to define mock.On call
 //   - ctx context.Context
 //   - categories []string
-func (_e *MockResourceRepo_Expecter) GetCodeStyle(ctx interface{}, categories interface{}) *MockResourceRepo_GetCodeStyle_Call {
-	return &MockResourceRepo_GetCodeStyle_Call{Call: _e.mock.On("GetCodeStyle", ctx, categories)}
+//   - keywords []string
+func (_e *MockResourceRepo_Expecter) GetCodeStyle(ctx interface{}, categories interface{}, keywords interface{}) *MockResourceRepo_GetCodeStyle_Call {
+	return &MockResourceRepo_GetCodeStyle_Call{Call: _e.mock.On("GetCodeStyle", ctx, categories, keywords)}
 }
 
-func (_c *MockResourceRepo_GetCodeStyle_Call) Run(run func(ctx context.Context, categories []string)) *MockResourceRepo_GetCodeStyle_Call {
+func (_c *MockResourceRepo_GetCodeStyle_Call) Run(run func(ctx context.Context, categories []string, keywords []string)) *MockResourceRepo_GetCodeStyle_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]string))
+		run(args[0].(context.Context), args[1].([]string), args[2].([]string))
 	})
 	return _c
 }
@@ -77,7 +78,7 @@ func (_c *MockResourceRepo_GetCodeStyle_Call) Return(_a0 []Rule, _a1 error) *Moc
 	return _c
 }
 
-func (_c *MockResourceRepo_GetCodeStyle_Call) RunAndReturn(run func(context.Context, []string) ([]Rule, error)) *MockResourceRepo_GetCodeStyle_Call {
+func (_c *MockResourceRepo_GetCodeStyle_Call) RunAndReturn(run func(context.Context, []string, []string) ([]Rule, error)) *MockResourceRepo_GetCodeStyle_Call {
 	_c.Call.Return(run)
 	return _c
 }
