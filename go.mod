@@ -3,7 +3,7 @@ module github.com/ksysoev/mcp-go-tools
 go 1.24.1
 
 require (
-	github.com/metoro-io/mcp-golang v0.8.0
+	github.com/metoro-io/mcp-golang v0.9.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
